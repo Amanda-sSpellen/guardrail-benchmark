@@ -1,0 +1,7 @@
+[tools]
+python = "3.13"  
+uv = "latest"
+
+[settings]
+# This tells mise to create/source the .venv using uv automatically
+python.uv_venv_auto = true
