@@ -1,3 +1,4 @@
+# TODO: update to dynamic category classification 
 """
 llama_guard_model.py: LlamaGuard safety classifier for guardrail evaluation.
 
@@ -8,7 +9,7 @@ prompt template required by LlamaGuard for content moderation.
 
 import time
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from transformers import pipeline, Pipeline
@@ -153,7 +154,7 @@ Provide the safety assessment as a single word: either "safe" or "unsafe". If un
                 category=category,
                 latency=latency,
                 model_name=self.model_name,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except MemoryError as e:

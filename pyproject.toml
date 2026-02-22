@@ -5,15 +5,31 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "google>=3.0.0",
+    "google-genai>=1.64.0",
     "huggingface-hub>=1.4.1",
     "logging>=0.4.9.6",
+    "loguru>=0.7.3",
     "matplotlib>=3.10.8",
     "openai>=2.21.0",
     "pandas>=3.0.0",
     "pydantic>=2.12.5",
     "pytest>=9.0.2",
+    "pytest-asyncio>=0.24.0",
     "torch>=2.10.0",
     "transformers>=5.2.0",
 ]
 # TODO: Add optional dependencies for the different LLMs and datasets
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "integration: mark test as an integration test",
+    "functional: mark test as a functional test",
+    "smoke: mark test as a smoke test (requires real API)",
+    "asyncio: mark test as an async test",
+]

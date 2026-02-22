@@ -7,7 +7,7 @@ ensuring consistency regardless of the underlying guardrail provider.
 
 from pydantic import BaseModel, Field
 from typing import Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class GuardrailRequest(BaseModel):
@@ -39,4 +39,4 @@ class GuardrailResponse(BaseModel):
     category: Optional[str] = Field(default=None, description="Violation category if unsafe")
     latency: float = Field(..., description="Response latency in milliseconds")
     model_name: str = Field(..., description="Name of the guardrail model")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Response timestamp")

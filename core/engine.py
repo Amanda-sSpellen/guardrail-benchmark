@@ -6,9 +6,10 @@ of guardrail models while respecting rate limits through semaphore-based concurr
 """
 
 import asyncio
+from loguru import logger
 from typing import List, Optional
-from schema import GuardrailRequest, GuardrailResponse
-from base_model import GuardrailModel
+from core.schema import GuardrailRequest, GuardrailResponse
+from core.base_model import GuardrailModel
 
 
 class AsyncRunner:
@@ -81,6 +82,8 @@ class AsyncRunner:
             self._evaluate_with_semaphore(model, request)
             for request in requests
         ]
+
+        logger.info(f"Running batch of {len(requests)} requests with max concurrency {self.max_concurrency}")
         
         # Execute all tasks concurrently with semaphore control
         responses = await asyncio.gather(*tasks)

@@ -5,21 +5,22 @@ This module provides the Evaluator class which coordinates benchmark runs,
 comparing multiple guardrail models against datasets and generating reports.
 """
 
+from loguru import logger
 from typing import List, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
-from schema import GuardrailResponse
-from base_model import GuardrailModel
-from base_dataset import GuardrailDataset
-from engine import AsyncRunner
+from core.schema import GuardrailResponse
+from core.base_model import GuardrailModel
+from core.base_dataset import GuardrailDataset
+from core.engine import AsyncRunner
 
 
 @dataclass
 class BenchmarkReport:
     """Container for benchmark results and metrics."""
     
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     models_evaluated: List[str] = field(default_factory=list)
     dataset_name: str = ""
     total_samples: int = 0
@@ -86,6 +87,7 @@ class Evaluator:
             raise ValueError("At least one model must be provided for comparison")
         
         # Load and standardize dataset
+        logger.info(f"Loading dataset from {dataset_path}")
         requests = dataset.load_and_standardize(dataset_path)
         
         if not requests:
@@ -100,7 +102,7 @@ class Evaluator:
         
         # Run each model against the dataset
         for model in models:
-            print(f"Evaluating model: {model.model_name}")
+            logger.info(f"Evaluating model: {model.model_name}")
             responses = await self.runner.run_batch(model, requests)
             self.report.results[model.model_name] = responses
         

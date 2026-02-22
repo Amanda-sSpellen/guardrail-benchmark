@@ -8,7 +8,7 @@ consistent GuardrailRequest format for benchmarking.
 
 from abc import ABC, abstractmethod
 from typing import List, Any, Dict
-from schema import GuardrailRequest
+from core.schema import GuardrailRequest
 
 
 class GuardrailDataset(ABC):

@@ -1,3 +1,4 @@
+# TODO: update to dynamic category classification 
 """
 openai_model.py: OpenAI moderations API wrapper for guardrail evaluation.
 
@@ -8,7 +9,7 @@ Uses openai.AsyncOpenAI for async API calls with comprehensive error handling.
 import asyncio
 import time
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
@@ -22,7 +23,7 @@ from core.base_model import GuardrailModel
 from core.schema import GuardrailRequest, GuardrailResponse
 
 
-class OpenAIGuardrailModel(GuardrailModel):
+class OpenAIModerationGuardrailModel(GuardrailModel):
     """
     OpenAI Moderations API wrapper for guardrail evaluation.
     
@@ -125,7 +126,7 @@ class OpenAIGuardrailModel(GuardrailModel):
                 category=category,
                 latency=latency,
                 model_name=self.model_name,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except RateLimitError as e:

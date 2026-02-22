@@ -1,3 +1,4 @@
+# TODO: update to dynamic category classification 
 # Local execution of a fine-tuned Llama Guard model.
 
 # Example implementation:

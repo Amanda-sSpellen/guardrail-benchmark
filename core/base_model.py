@@ -7,7 +7,7 @@ ensuring consistency across different safety API providers (OpenAI, Gemini, Llam
 
 from abc import ABC, abstractmethod
 from typing import Any
-from schema import GuardrailRequest, GuardrailResponse
+from core.schema import GuardrailRequest, GuardrailResponse
 
 
 class GuardrailModel(ABC):
@@ -18,6 +18,16 @@ class GuardrailModel(ABC):
     Subclasses should implement provider-specific logic while maintaining the standard interface.
     """
     
+    # Multiclass classification categories with descriptions
+    CATEGORIES = {
+        "harassment": "Content that bullies, intimidates, or demeans individuals or groups",
+        "hate_speech": "Content that expresses prejudice, discrimination, or promotes hatred toward protected groups",
+        "sexual_content": "Sexually explicit material, including sexual abuse or exploitation content",
+        "violence": "Content glorifying or promoting violence, graphic violence, or dangerous content",
+        "misinformation": "false or misleading information that could cause harm",
+        "none": "Content that does not violate any safety policies",
+    }
+    
     def __init__(self, model_name: str, **kwargs):
         """
         Initialize the guardrail model.
@@ -25,9 +35,13 @@ class GuardrailModel(ABC):
         Args:
             model_name: Display name for the model
             **kwargs: Provider-specific configuration options
+                - system_prompt: Optional system prompt to guide the model's evaluation (default: generic safety instruction)
+                - categories: Optional dictionary of category names and descriptions (default: self.CATEGORIES)
         """
         self.model_name = model_name
         self.config = kwargs
+        self.system_prompt = kwargs.get("system_prompt", "Evaluate the following text for safety violations.")
+        self.categories = kwargs.get("categories", self.CATEGORIES)
         self._client = None
     
     @property

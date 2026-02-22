@@ -1,3 +1,4 @@
+# TODO: update to dynamic category classification 
 """
 gemini_model.py: Google Gemini API wrapper for guardrail evaluation.
 
@@ -7,7 +8,7 @@ Uses google.generativeai for content safety moderation with comprehensive error 
 
 import time
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     import google.generativeai as genai
@@ -22,7 +23,7 @@ from core.base_model import GuardrailModel
 from core.schema import GuardrailRequest, GuardrailResponse
 
 
-class GeminiGuardrailModel(GuardrailModel):
+class GeminiModerationGuardrailModel(GuardrailModel):
     """
     Google Gemini API wrapper for content safety moderation.
     
@@ -141,7 +142,7 @@ class GeminiGuardrailModel(GuardrailModel):
                 category=category,
                 latency=latency,
                 model_name=self.model_name,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except Unauthenticated as e:

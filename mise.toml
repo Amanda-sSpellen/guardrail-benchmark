@@ -4,4 +4,4 @@ uv = "latest"
 
 [settings]
 # This tells mise to create/source the .venv using uv automatically
-python.uv_venv_auto = true
+python.uv_venv_auto = false
