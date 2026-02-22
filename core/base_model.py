@@ -38,14 +38,15 @@ class GuardrailModel(ABC):
                 - system_prompt: Optional system prompt to guide the model's evaluation (default: generic safety instruction)
                 - categories: Optional dictionary of category names and descriptions (default: self.CATEGORIES)
                 - temperature: Optional temperature setting for the model (default: provider-specific)
+                - safe_categories: Optional labels for the "safe" categories (default: ["none"])
         """
         self.model_name = model_name
         self.config = kwargs
         self.system_prompt = kwargs.get("system_prompt", "Evaluate the following text for safety violations.")
         self.categories = kwargs.get("categories", self.CATEGORIES)
         self.temperature = kwargs.get("temperature")
+        self.safe_categories = kwargs.get("safe_categories", ["none"])  # Default safe category label
         self._client = None
-        # TODO: add custom label for "safe" category
     
     @property
     def client(self):

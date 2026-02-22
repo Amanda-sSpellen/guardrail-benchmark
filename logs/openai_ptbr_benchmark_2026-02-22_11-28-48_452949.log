@@ -1,0 +1,38 @@
+2026-02-22 11:28:48 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 11:28:48 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 11:28:48 | INFO     |   Model: gpt-5-nano
+2026-02-22 11:28:48 | INFO     |   Output dir: results/openai_ptbr/004
+2026-02-22 11:28:48 | INFO     |   Experiment Index: 004
+2026-02-22 11:28:48 | INFO     | ================================================================================
+2026-02-22 11:28:48 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 11:28:48 | INFO     | ================================================================================
+2026-02-22 11:28:48 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 11:28:48 | INFO     | Loaded 2 samples from dataset
+2026-02-22 11:28:48 | INFO     | Category distribution:
+2026-02-22 11:28:48 | INFO     |   safe: 2
+2026-02-22 11:28:48 | INFO     | Evaluating gpt-5-nano on 2 samples
+2026-02-22 11:28:55 | INFO     | Completed evaluation. Got 2 responses
+2026-02-22 11:28:55 | INFO     | Calculating metrics
+2026-02-22 11:28:55 | INFO     | Binary Classification Metrics:
+2026-02-22 11:28:55 | INFO     |   Accuracy: 1.0000
+2026-02-22 11:28:55 | INFO     |   Precision: 1.0000
+2026-02-22 11:28:55 | INFO     |   Recall: 1.0000
+2026-02-22 11:28:55 | INFO     |   F1 Score: 1.0000
+2026-02-22 11:28:55 | INFO     | Multiclass Classification Metrics:
+2026-02-22 11:28:55 | INFO     |   Accuracy: 1.0000
+2026-02-22 11:28:55 | INFO     |   Macro F1: 1.0000
+2026-02-22 11:28:55 | INFO     |   Weighted F1: 1.0000
+2026-02-22 11:28:55 | INFO     | Per-Class Metrics:
+2026-02-22 11:28:55 | INFO     |   safe: P=1.0000 R=1.0000 F1=1.0000 (n=2)
+2026-02-22 11:28:55 | INFO     |   Mean Latency: 6476.29ms
+2026-02-22 11:28:55 | INFO     | Generating visualizations
+2026-02-22 11:28:56 | INFO     | Saved binary confusion matrix: results/openai_ptbr/004/004_binary_confusion_matrix.png
+2026-02-22 11:28:56 | INFO     | Saved latency distribution: results/openai_ptbr/004/004_latency_distribution.png
+2026-02-22 11:28:57 | INFO     | Saved binary metrics comparison: results/openai_ptbr/004/004_binary_metrics_comparison.png
+2026-02-22 11:28:57 | INFO     | Saved multiclass metrics comparison: results/openai_ptbr/004/004_multiclass_metrics_comparison.png
+2026-02-22 11:28:57 | INFO     | Saving results
+2026-02-22 11:28:57 | INFO     | Saved detailed metadata to results/openai_ptbr/004/004_openai_ptbr_benchmark_metadata_20260222_112857.json
+2026-02-22 11:28:57 | INFO     | Saved results to results/openai_ptbr/004/004_openai_ptbr_benchmark_20260222_112857.json
+2026-02-22 11:28:57 | INFO     | ================================================================================
+2026-02-22 11:28:57 | INFO     | Benchmark completed successfully!
+2026-02-22 11:28:57 | INFO     | ================================================================================

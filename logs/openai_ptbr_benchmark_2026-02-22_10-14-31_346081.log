@@ -1,0 +1,32 @@
+2026-02-22 10:14:31 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 10:14:31 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 10:14:31 | INFO     |   Model: gpt-5-nano
+2026-02-22 10:14:31 | INFO     |   Output dir: results/openai_ptbr
+2026-02-22 10:14:31 | INFO     | ================================================================================
+2026-02-22 10:14:31 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 10:14:31 | INFO     | ================================================================================
+2026-02-22 10:14:31 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 10:14:31 | INFO     | Loaded 109 samples from dataset
+2026-02-22 10:14:31 | INFO     | Category distribution:
+2026-02-22 10:14:31 | INFO     |   off-topic: 29
+2026-02-22 10:14:31 | INFO     |   safe: 53
+2026-02-22 10:14:31 | INFO     |   unethical: 27
+2026-02-22 10:14:31 | INFO     | Evaluating gpt-5-nano on 109 samples
+2026-02-22 10:18:06 | INFO     | Completed evaluation. Got 109 responses
+2026-02-22 10:18:06 | INFO     | Calculating metrics
+2026-02-22 10:18:06 | INFO     | Metrics calculated:
+2026-02-22 10:18:06 | INFO     |   Accuracy: 0.0092
+2026-02-22 10:18:06 | INFO     |   Precision: 0.0000
+2026-02-22 10:18:06 | INFO     |   Recall: 0.0000
+2026-02-22 10:18:06 | INFO     |   F1 Score: 0.0000
+2026-02-22 10:18:06 | INFO     |   Mean Latency: 3908.18ms
+2026-02-22 10:18:06 | INFO     | Generating visualizations
+2026-02-22 10:18:07 | INFO     | Saved confusion matrix: results/openai_ptbr/confusion_matrix.png
+2026-02-22 10:18:08 | INFO     | Saved latency distribution: results/openai_ptbr/latency_distribution.png
+2026-02-22 10:18:08 | INFO     | Saved metrics comparison: results/openai_ptbr/metrics_comparison.png
+2026-02-22 10:18:08 | INFO     | Saving results
+2026-02-22 10:18:08 | INFO     | Saved detailed metadata to results/openai_ptbr/openai_ptbr_benchmark_metadata_20260222_101808.json
+2026-02-22 10:18:08 | INFO     | Saved results to results/openai_ptbr/openai_ptbr_benchmark_20260222_101808.json
+2026-02-22 10:18:08 | INFO     | ================================================================================
+2026-02-22 10:18:08 | INFO     | Benchmark completed successfully!
+2026-02-22 10:18:08 | INFO     | ================================================================================

@@ -1,0 +1,30 @@
+2026-02-22 10:26:13 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 10:26:13 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 10:26:13 | INFO     |   Model: gpt-5-nano
+2026-02-22 10:26:13 | INFO     |   Output dir: results/openai_ptbr
+2026-02-22 10:26:13 | INFO     | ================================================================================
+2026-02-22 10:26:13 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 10:26:13 | INFO     | ================================================================================
+2026-02-22 10:26:13 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 10:26:13 | INFO     | Loaded 12 samples from dataset
+2026-02-22 10:26:13 | INFO     | Category distribution:
+2026-02-22 10:26:13 | INFO     |   safe: 12
+2026-02-22 10:26:13 | INFO     | Evaluating gpt-5-nano on 12 samples
+2026-02-22 10:26:47 | INFO     | Completed evaluation. Got 12 responses
+2026-02-22 10:26:47 | INFO     | Calculating metrics
+2026-02-22 10:26:47 | INFO     | Metrics calculated:
+2026-02-22 10:26:47 | INFO     |   Accuracy: 0.0000
+2026-02-22 10:26:47 | INFO     |   Precision: 0.0000
+2026-02-22 10:26:47 | INFO     |   Recall: 0.0000
+2026-02-22 10:26:47 | INFO     |   F1 Score: 0.0000
+2026-02-22 10:26:47 | INFO     |   Mean Latency: 5381.11ms
+2026-02-22 10:26:47 | INFO     | Generating visualizations
+2026-02-22 10:26:48 | INFO     | Saved confusion matrix: results/openai_ptbr/confusion_matrix.png
+2026-02-22 10:26:49 | INFO     | Saved latency distribution: results/openai_ptbr/latency_distribution.png
+2026-02-22 10:26:49 | INFO     | Saved metrics comparison: results/openai_ptbr/metrics_comparison.png
+2026-02-22 10:26:49 | INFO     | Saving results
+2026-02-22 10:26:50 | INFO     | Saved detailed metadata to results/openai_ptbr/openai_ptbr_benchmark_metadata_20260222_102650.json
+2026-02-22 10:26:50 | INFO     | Saved results to results/openai_ptbr/openai_ptbr_benchmark_20260222_102649.json
+2026-02-22 10:26:50 | INFO     | ================================================================================
+2026-02-22 10:26:50 | INFO     | Benchmark completed successfully!
+2026-02-22 10:26:50 | INFO     | ================================================================================

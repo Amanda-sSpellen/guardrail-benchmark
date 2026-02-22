@@ -15,7 +15,8 @@ from dataclasses import asdict
 def save_benchmark_results(
     results: Dict[str, Any],
     experiment_name: str,
-    output_dir: str = "results"
+    output_dir: str = "results",
+    experiment_index: int | None = None,
 ) -> str:
     """
     Save benchmark results to a JSON file.
@@ -24,6 +25,7 @@ def save_benchmark_results(
         results: Dictionary containing benchmark results and metrics
         experiment_name: Name of the experiment for the filename
         output_dir: Directory to save results (default: "results")
+        experiment_index: Optional experiment index to prepend to filename
         
     Returns:
         Path where results were saved
@@ -32,7 +34,8 @@ def save_benchmark_results(
     output_path.mkdir(parents=True, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = output_path / f"{experiment_name}_{timestamp}.json"
+    index_prefix = f"{experiment_index:03d}_" if experiment_index is not None else ""
+    filename = output_path / f"{index_prefix}{experiment_name}_{timestamp}.json"
     
     # Serialize results, handling non-serializable types
     serializable_results = _make_serializable(results)
@@ -46,7 +49,8 @@ def save_benchmark_results(
 def save_experiment_metadata(
     metadata: Dict[str, Any],
     experiment_name: str,
-    output_dir: str = "results"
+    output_dir: str = "results",
+    experiment_index: int | None = None,
 ) -> str:
     """
     Save experiment metadata and configuration.
@@ -55,6 +59,7 @@ def save_experiment_metadata(
         metadata: Dictionary containing experiment configuration and metadata
         experiment_name: Name of the experiment
         output_dir: Directory to save metadata
+        experiment_index: Optional experiment index to prepend to filename
         
     Returns:
         Path where metadata was saved
@@ -63,7 +68,8 @@ def save_experiment_metadata(
     output_path.mkdir(parents=True, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = output_path / f"{experiment_name}_metadata_{timestamp}.json"
+    index_prefix = f"{experiment_index:03d}_" if experiment_index is not None else ""
+    filename = output_path / f"{index_prefix}{experiment_name}_metadata_{timestamp}.json"
     
     serializable_metadata = _make_serializable(metadata)
     

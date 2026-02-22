@@ -78,7 +78,10 @@ class OpenAIGeneralGuardrailModel(GuardrailModel):
             )
             
             # Create system prompt with categories
-            system_prompt = f"""You are a content safety classifier. Evaluate the provided text and classify it into one of these categories:
+            if self.system_prompt is not None:
+                system_prompt = self.system_prompt + "\n\n" + f"Categories:\n{categories_desc}"
+            else:
+                system_prompt = f"""You are a content safety classifier. Evaluate the provided text and classify it into one of these categories:
 
 {categories_desc}
 
@@ -114,7 +117,7 @@ Respond ONLY with valid JSON in the following format (no markdown, no code block
             latency = (time.time() - start_time) * 1000  # Convert to ms
             
             category = response.choices[0].message.parsed.category.value
-            is_safe = category == 'none'
+            is_safe = category in self.safe_categories
             
             return GuardrailResponse(
                 is_safe=is_safe,
@@ -122,7 +125,8 @@ Respond ONLY with valid JSON in the following format (no markdown, no code block
                 category=category,
                 latency=latency,
                 model_name=self.model_name,
-                timestamp=datetime.now(timezone.utc)
+                timestamp=datetime.now(timezone.utc),
+                raw_response=response.choices[0].message.parsed.category  # Store raw response for debugging
             )
         
         except (AttributeError, TypeError, KeyError) as e:
