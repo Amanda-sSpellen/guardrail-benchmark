@@ -74,7 +74,7 @@ class OpenAIGeneralGuardrailModel(GuardrailModel):
         try:
             # Build the categories description string
             categories_desc = "\n".join(
-                [f"- {cat}: {desc}" for cat, desc in self.CATEGORIES.items()]
+                [f"- {cat}: {desc}" for cat, desc in self.categories.items()]
             )
             
             # Create system prompt with categories

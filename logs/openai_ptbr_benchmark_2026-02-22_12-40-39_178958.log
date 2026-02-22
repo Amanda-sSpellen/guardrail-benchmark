@@ -1,0 +1,15 @@
+2026-02-22 12:40:39 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 12:40:39 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 12:40:39 | INFO     |   Model: gpt-5-mini
+2026-02-22 12:40:39 | INFO     |   Output dir: results/openai_ptbr/003
+2026-02-22 12:40:39 | INFO     |   Experiment Index: 003
+2026-02-22 12:40:39 | INFO     | ================================================================================
+2026-02-22 12:40:39 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 12:40:39 | INFO     | ================================================================================
+2026-02-22 12:40:39 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 12:40:39 | INFO     | Loaded 109 samples from dataset
+2026-02-22 12:40:39 | INFO     | Category distribution:
+2026-02-22 12:40:39 | INFO     |   off-topic: 29
+2026-02-22 12:40:39 | INFO     |   safe: 53
+2026-02-22 12:40:39 | INFO     |   unethical: 27
+2026-02-22 12:40:39 | INFO     | Evaluating gpt-5-mini on 109 samples

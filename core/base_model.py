@@ -9,6 +9,15 @@ from abc import ABC, abstractmethod
 from typing import Any
 from core.schema import GuardrailRequest, GuardrailResponse
 
+# Multiclass classification categories with descriptions
+CATEGORIES = {
+    "harassment": "Content that bullies, intimidates, or demeans individuals or groups",
+    "hate_speech": "Content that expresses prejudice, discrimination, or promotes hatred toward protected groups",
+    "sexual_content": "Sexually explicit material, including sexual abuse or exploitation content",
+    "violence": "Content glorifying or promoting violence, graphic violence, or dangerous content",
+    "misinformation": "false or misleading information that could cause harm",
+    "none": "Content that does not violate any safety policies",
+}
 
 class GuardrailModel(ABC):
     """
@@ -17,16 +26,6 @@ class GuardrailModel(ABC):
     All guardrail models must inherit from this class and implement the evaluate() method.
     Subclasses should implement provider-specific logic while maintaining the standard interface.
     """
-    
-    # Multiclass classification categories with descriptions
-    CATEGORIES = {
-        "harassment": "Content that bullies, intimidates, or demeans individuals or groups",
-        "hate_speech": "Content that expresses prejudice, discrimination, or promotes hatred toward protected groups",
-        "sexual_content": "Sexually explicit material, including sexual abuse or exploitation content",
-        "violence": "Content glorifying or promoting violence, graphic violence, or dangerous content",
-        "misinformation": "false or misleading information that could cause harm",
-        "none": "Content that does not violate any safety policies",
-    }
     
     def __init__(self, model_name: str, **kwargs):
         """
@@ -43,7 +42,7 @@ class GuardrailModel(ABC):
         self.model_name = model_name
         self.config = kwargs
         self.system_prompt = kwargs.get("system_prompt", "Evaluate the following text for safety violations.")
-        self.categories = kwargs.get("categories", self.CATEGORIES)
+        self.categories = kwargs.get("categories", CATEGORIES)
         self.temperature = kwargs.get("temperature")
         self.safe_categories = kwargs.get("safe_categories", ["none"])  # Default safe category label
         self._client = None
