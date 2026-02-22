@@ -2,6 +2,8 @@
 
 A modular framework for evaluating and benchmarking LLM Guardrail models against standardized datasets. This library is designed to be **provider-agnostic**, **asynchronous**, and **extensible**.
 
+---
+
 ## Contents
 1. [Purpose](#purpose)
 2. [Project Structure](#project-structure)
@@ -9,11 +11,15 @@ A modular framework for evaluating and benchmarking LLM Guardrail models against
 3. [Quick Start](#quick-start)
 
 
+---
+
 ## 1. Purpose 
 
 [Back to Contents](#contents)
 
 The goal of this project is to provide a unified interface to measure the efficacy of different safety layers. By standardizing the input/output schemas, you can compare a local LLM instance against a cloud API (OpenAI/Gemini) using the same metrics, latency tracking, and visualization tools.
+
+---
 
 ## 2. Project Structure
 
@@ -48,6 +54,8 @@ guardrail_benchmark/
 
 ```
 
+---
+
 ## 3. Key Features
 
 [Back to Contents](#contents)
@@ -56,6 +64,8 @@ guardrail_benchmark/
 * **Async Performance:** Built with `asyncio`, allowing for high-throughput testing by batching API requests without blocking.
 * **Rate Limit Management:** Integrated `Semaphore` support in the `engine.py` to prevent hitting provider rate limits during large-scale benchmarks.
 * **Lazy Dependencies:** Install only what you need. Use `pip install .[openai]` or `.[local]` to keep the environment lean.
+
+---
 
 ## 4. Quick Start
 
@@ -101,7 +111,9 @@ uv run python experiments/benchmark_v1.py
 
 ```
 
-### 5. TODO List
+---
+
+## 5. TODO List
 - `tests/integration/test_gemini_wrapper.py`: TODO: update mock response to dict
 - `models/caramllo_model.py`: 
     - TODO: update to dynamic category classification 
