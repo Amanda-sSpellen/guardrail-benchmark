@@ -100,3 +100,36 @@ Execute your experiment scripts within the managed environment:
 uv run python experiments/benchmark_v1.py
 
 ```
+
+### 5. TODO List
+- `tests/integration/test_gemini_wrapper.py`: TODO: update mock response to dict
+- `models/caramllo_model.py`: 
+    - TODO: update to dynamic category classification 
+    - TODO: integration and smoke tests
+- `models/llama_guard_model.py`: 
+    - TODO: fix implementation 
+    - TODO: update to dynamic category classification 
+    - TODO: integration and smoke tests
+- `utils/plotting.py`
+    - TODO: add timestamps
+    - TODO: add multiclass confusion matrix
+- `experiments/openai_ptbr_benchmark.py`: 
+    - TODO: create user-friendly interface for the benchmark
+    - TODO: integration and smoke tests
+- `experiments/gemini_ptbr_benchmark.py`: 
+    - TODO: fix implementation 
+    - TODO: create user-friendly interface for the benchmark
+    - TODO: integration and smoke tests
+- `pyproject.toml`: TODO: Add optional dependencies for the different LLMs and datasets
+- `models/openai_moderation_model.py`: 
+    - TODO: fix implementation 
+    - TODO: update to dynamic category classification 
+    - TODO: integration and smoke tests
+- `models/gemini_moderation_model.py`: 
+    - TODO: fix implementation 
+    - TODO: update to dynamic category classification 
+    - TODO: integration and smoke tests
+- `datasets/toxic_chat_dataset.py`: 
+    - TODO: Could add HuggingFace loading 
+    - TODO: integration and smoke tests
+

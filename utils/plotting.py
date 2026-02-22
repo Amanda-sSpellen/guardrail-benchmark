@@ -1,4 +1,4 @@
-# TODO: add timestamp
+# TODO: add timestamps
 """
 plotting.py: Visualization utilities for benchmark results.
 
