@@ -28,6 +28,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 markers = [
+    "unit: mark test as an unit test",
     "integration: mark test as an integration test",
     "functional: mark test as a functional test",
     "smoke: mark test as a smoke test (requires real API)",

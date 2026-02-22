@@ -108,13 +108,13 @@ Respond ONLY with valid JSON in the following format (no markdown, no code block
                     }
                 ],
                 response_format=DynamicSchema,
-                temperature=0.1,
+                temperature=self.config.get("temperature", 1)
             )
             
             latency = (time.time() - start_time) * 1000  # Convert to ms
             
-            category = response.choices[0].message.parsed.category
-            is_safe = category == "none"
+            category = response.choices[0].message.parsed.category.value
+            is_safe = category == 'none'
             
             return GuardrailResponse(
                 is_safe=is_safe,

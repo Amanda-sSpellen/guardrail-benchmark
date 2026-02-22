@@ -2,6 +2,33 @@
 python = "3.13"  
 uv = "latest"
 
+[env]
+_.file = ".env"
+
 [settings]
 # This tells mise to create/source the .venv using uv automatically
 python.uv_venv_auto = false
+
+[tasks.tests]
+description = "Run all tests using pytest (except smoke tests)"
+run = 'uv run pytest -m "not smoke" --tb=short -vv'
+
+[tasks.test-unit]
+description = "Run unit tests using pytest"
+run = "uv run pytest -m unit --tb=short -vv"
+
+[tasks.test-integration]
+description = "Run integration tests using pytest"
+run = "uv run pytest -m integration --tb=short -vv"
+
+[tasks.test-functional]
+description = "Run functional tests using pytest"
+run = "uv run pytest -m functional --tb=short -vv"
+
+[tasks.test-smoke-gemini]
+description = "Run Gemini smoke tests using pytest"
+run = "uv run pytest tests/smoke/test_live_gemini.py --tb=short -vv"
+
+[tasks.test-smoke-openai]
+description = "Run OpenAI smoke tests using pytest"
+run = "uv run pytest tests/smoke/test_live_openai.py --tb=short -vv"

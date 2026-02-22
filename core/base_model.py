@@ -37,11 +37,13 @@ class GuardrailModel(ABC):
             **kwargs: Provider-specific configuration options
                 - system_prompt: Optional system prompt to guide the model's evaluation (default: generic safety instruction)
                 - categories: Optional dictionary of category names and descriptions (default: self.CATEGORIES)
+                - temperature: Optional temperature setting for the model (default: provider-specific)
         """
         self.model_name = model_name
         self.config = kwargs
         self.system_prompt = kwargs.get("system_prompt", "Evaluate the following text for safety violations.")
         self.categories = kwargs.get("categories", self.CATEGORIES)
+        self.temperature = kwargs.get("temperature")
         self._client = None
     
     @property

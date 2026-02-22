@@ -99,17 +99,16 @@ Respond ONLY with valid JSON in the following format (no markdown, no code block
             )
 
             # Generate content with structured output
-            response = self.client.generate_content(
+            response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=request.text,
-                config=config,
-                stream=False
+                config=config
             )
             
             latency = (time.time() - start_time) * 1000  # Convert to ms
             
             result = response.parsed
-            category = result.category
+            category = result["category"]
             is_safe = category == "none"
             
             return GuardrailResponse(

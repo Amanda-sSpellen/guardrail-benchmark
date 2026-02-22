@@ -22,7 +22,7 @@ class TestOpenAIGeneralGuardrailModel:
     def openai_model(self):
         """Create a OpenAIGeneralGuardrailModel instance with mocked client."""
         model = OpenAIGeneralGuardrailModel(
-            model_name="gpt-4o",
+            model_name="gpt-5-nano",
             api_key="mock_api_key"
         )
         # Mock the client
@@ -54,7 +54,7 @@ class TestOpenAIGeneralGuardrailModel:
         assert isinstance(response, GuardrailResponse)
         assert response.is_safe is True
         assert response.category == "none"
-        assert response.model_name == "gpt-4o"
+        assert response.model_name == "gpt-5-nano"
     
     @pytest.mark.asyncio
     async def test_evaluate_violent_content(self, openai_model, violent_request):

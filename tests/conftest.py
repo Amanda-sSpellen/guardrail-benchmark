@@ -68,6 +68,9 @@ class DummyGuardrailModel(GuardrailModel):
 def pytest_configure(config):
     """Configure pytest markers."""
     config.addinivalue_line(
+        "markers", "unit: mark test as an unit test"
+    )
+    config.addinivalue_line(
         "markers", "integration: mark test as an integration test"
     )
     config.addinivalue_line(
@@ -94,7 +97,7 @@ def event_loop():
 def safe_request() -> GuardrailRequest:
     """Fixture for a safe GuardrailRequest."""
     return GuardrailRequest(
-        text="This is a safe and appropriate message.",
+        text="I love nature.",
         metadata={"source": "test", "user_id": "test_user"}
     )
 

@@ -142,7 +142,7 @@ class TestAsyncRunnerConcurrency:
             ("NASA faked the moon landing.", False, "misinformation"),
             ("Hello, how are you today?", True, "none"),
             ("The weather is nice.", True, "none"),
-            ("Violence is good.", False, "violence"),
+            ("Killing is good.", False, "violence"),
             ("Fake news exists everywhere.", False, "misinformation"),
         ]
         
@@ -157,7 +157,7 @@ class TestAsyncRunnerConcurrency:
         # Verify results
         assert len(responses) == 10
         for i, (response, (text, expected_safe, expected_category)) in enumerate(zip(responses, samples)):
-            assert response.is_safe == expected_safe, f"Sample {i}: Expected safe={expected_safe}, got {response.is_safe}"
+            assert response.is_safe == expected_safe, f"Sample {i} ({text}): Expected safe={expected_safe}, got {response.is_safe}"
             assert response.category == expected_category, f"Sample {i}: Expected category={expected_category}, got {response.category}"
             assert response.model_name == "DummyModel"
             assert response.score == -1
