@@ -45,6 +45,7 @@ class GuardrailModel(ABC):
         self.categories = kwargs.get("categories", self.CATEGORIES)
         self.temperature = kwargs.get("temperature")
         self._client = None
+        # TODO: add custom label for "safe" category
     
     @property
     def client(self):

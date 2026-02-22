@@ -7,6 +7,8 @@ Uses google.genai for content safety moderation with comprehensive error handlin
 
 import time
 import json
+import re
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_message
 from datetime import datetime, timezone
 
 try:
@@ -22,6 +24,19 @@ from core.base_model import GuardrailModel
 from core.schema import GuardrailRequest, GuardrailResponse
 
 
+# This regex finds the "Please retry in X.Xs" or the '57s' in the error string
+def wait_for_gemini_quota(retry_state):
+    """Custom wait logic that looks for Google's suggested delay."""
+    last_exc = str(retry_state.outcome.exception())
+    
+    # Try to find "retry in 57.9s" or similar
+    match = re.search(r"retry in (\d+\.?\d*)s", last_exc)
+    if match:
+        return float(match.group(1)) + 1  # Wait the suggested time + 1s buffer
+    
+    # Fallback to exponential backoff if string parsing fails
+    return wait_exponential(multiplier=1, min=5, max=60)(retry_state)
+
 class GeminiGeneralGuardrailModel(GuardrailModel):
     """
     Google Gemini API wrapper for content safety moderation.
@@ -29,6 +44,14 @@ class GeminiGeneralGuardrailModel(GuardrailModel):
     Uses Gemini's general endpoint to evaluate text for policy violations.
     Returns standardized multiclass classification results.
     """
+
+    @retry(
+        # Only retry if the error message contains quota/limit strings
+        retry=retry_if_exception_message(match="429 RESOURCE_EXHAUSTED|Quota exceeded"),
+        wait=wait_for_gemini_quota, 
+        stop=stop_after_attempt(3), # Don't loop forever if your quota is truly empty
+        reraise=True
+    )
     
     def _load_client(self) -> genai.Client:
         """
@@ -92,14 +115,14 @@ Respond ONLY with valid JSON in the following format (no markdown, no code block
                 response_schema={
                     "type": "object",
                     "properties": {
-                        "category": {"type": "string", "enum": list(self.categories.keys())},
+                        "category": {"type": "string", "enum": list(self.CATEGORIES.keys())},
                         "explanation": {"type": "string"}
                     }
                 },
             )
 
             # Generate content with structured output
-            response = self.client.models.generate_content(
+            response = self.client.aio.models.generate_content(
                 model=self.model_name,
                 contents=request.text,
                 config=config

@@ -1,0 +1,15 @@
+2026-02-22 09:37:54 | INFO     | Initialized GeminiPTBRBenchmark
+2026-02-22 09:37:54 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 09:37:54 | INFO     |   Model: gemini-2.5-flash
+2026-02-22 09:37:54 | INFO     |   Output dir: results/gemini_ptbr
+2026-02-22 09:37:54 | INFO     | ================================================================================
+2026-02-22 09:37:54 | INFO     | Starting Gemini PT-BR Academic Dataset Benchmark
+2026-02-22 09:37:54 | INFO     | ================================================================================
+2026-02-22 09:37:54 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 09:37:54 | INFO     | Loaded 109 samples from dataset
+2026-02-22 09:37:54 | INFO     | Category distribution:
+2026-02-22 09:37:54 | INFO     |   off-topic: 29
+2026-02-22 09:37:54 | INFO     |   safe: 53
+2026-02-22 09:37:54 | INFO     |   unethical: 27
+2026-02-22 09:37:54 | INFO     | Evaluating gemini-2.5-flash on 109 samples
+2026-02-22 09:37:54 | INFO     | Running batch of 109 requests with max concurrency 5

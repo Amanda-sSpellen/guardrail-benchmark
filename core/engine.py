@@ -6,11 +6,10 @@ of guardrail models while respecting rate limits through semaphore-based concurr
 """
 
 import asyncio
-from loguru import logger
-from typing import List, Optional
+from typing import List, Optional, Union
 from core.schema import GuardrailRequest, GuardrailResponse
 from core.base_model import GuardrailModel
-
+from tqdm import tqdm
 
 class AsyncRunner:
     """
@@ -48,7 +47,8 @@ class AsyncRunner:
         """
         async with self.semaphore:
             return await model.evaluate(request)
-    
+        
+
     async def run_batch(
         self,
         model: GuardrailModel,
@@ -73,19 +73,28 @@ class AsyncRunner:
         Raises:
             Exception: Re-raises any exceptions from individual model evaluations
         """
+
         if max_concurrency is not None:
             self.semaphore = asyncio.Semaphore(max_concurrency)
-            self.max_concurrency = max_concurrency
-        
-        # Create a task for each request
-        tasks = [
-            self._evaluate_with_semaphore(model, request)
-            for request in requests
-        ]
 
-        logger.info(f"Running batch of {len(requests)} requests with max concurrency {self.max_concurrency}")
+        # 1. Initialize with explicit type hinting to satisfy Pylance
+        responses: List[Optional[Union[GuardrailResponse, Exception]]] = [None] * len(requests)
         
-        # Execute all tasks concurrently with semaphore control
-        responses = await asyncio.gather(*tasks)
-        
-        return responses
+        # 2. Wrap tasks with index tracking
+        async def _wrapped_eval(index: int, req: GuardrailRequest):
+            # Add a slight staggered start if you have a high concurrency
+            await asyncio.sleep(index * 0.5) 
+            try:
+                return index, await self._evaluate_with_semaphore(model, req)
+            except Exception as e:
+                return index, e
+
+        tasks = [_wrapped_eval(i, req) for i, req in enumerate(requests)]
+
+        # 3. Execute and update tqdm
+        for coro in tqdm(asyncio.as_completed(tasks), total=len(requests), desc="Evaluating"):
+            index, result = await coro
+            responses[index] = result
+            
+        # 4. Extract only the successful responses
+        return [res for res in responses if isinstance(res, GuardrailResponse)] 

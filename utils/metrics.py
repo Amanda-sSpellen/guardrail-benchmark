@@ -86,11 +86,12 @@ def calculate_classification_metrics(
     truth = np.array(ground_truth)
     
     # Compute confusion matrix values
-    tp = np.sum((pred) & (truth))
-    tn = np.sum((not pred) & (not truth))
-    fp = np.sum((pred) & (not truth))
-    fn = np.sum((not pred) & (truth))
+    tp = np.sum(pred & truth)
+    tn = np.sum(~pred & ~truth)
+    fp = np.sum(pred & ~truth)
+    fn = np.sum(~pred & truth)
     
+    # TODO: Handle cases for negative samples
     # Calculate metrics
     accuracy = (tp + tn) / len(predicted)
     

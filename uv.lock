@@ -583,6 +583,7 @@ dependencies = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "torch" },
+    { name = "tqdm" },
     { name = "transformers" },
 ]
 
@@ -599,6 +600,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-asyncio", specifier = ">=0.24.0" },
     { name = "torch", specifier = ">=2.10.0" },
+    { name = "tqdm", specifier = ">=4.67.3" },
     { name = "transformers", specifier = ">=5.2.0" },
 ]
 

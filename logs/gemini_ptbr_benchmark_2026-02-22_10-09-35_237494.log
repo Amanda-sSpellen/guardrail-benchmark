@@ -1,0 +1,17 @@
+2026-02-22 10:09:35 | INFO     | Initialized GeminiPTBRBenchmark
+2026-02-22 10:09:35 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 10:09:35 | INFO     |   Model: gemini-2.5-flash
+2026-02-22 10:09:35 | INFO     |   Output dir: results/gemini_ptbr
+2026-02-22 10:09:35 | INFO     | ================================================================================
+2026-02-22 10:09:35 | INFO     | Starting Gemini PT-BR Academic Dataset Benchmark
+2026-02-22 10:09:35 | INFO     | ================================================================================
+2026-02-22 10:09:35 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 10:09:35 | INFO     | Loaded 109 samples from dataset
+2026-02-22 10:09:35 | INFO     | Category distribution:
+2026-02-22 10:09:35 | INFO     |   off-topic: 29
+2026-02-22 10:09:35 | INFO     |   safe: 53
+2026-02-22 10:09:35 | INFO     |   unethical: 27
+2026-02-22 10:09:35 | INFO     | Evaluating gemini-2.5-flash on 109 samples
+2026-02-22 10:10:28 | INFO     | Completed evaluation. Got 0 responses
+2026-02-22 10:10:28 | INFO     | Calculating metrics
+2026-02-22 10:10:28 | ERROR    | Benchmark failed with error: Must evaluate model before calculating metrics
