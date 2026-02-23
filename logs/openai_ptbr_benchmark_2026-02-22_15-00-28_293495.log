@@ -1,0 +1,17 @@
+2026-02-22 15:00:28 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 15:00:28 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 15:00:28 | INFO     |   Model: gpt-5-mini
+2026-02-22 15:00:28 | INFO     |   Output dir: results/openai_ptbr/007
+2026-02-22 15:00:28 | INFO     |   Experiment Index: 007
+2026-02-22 15:00:28 | INFO     | ================================================================================
+2026-02-22 15:00:28 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 15:00:28 | INFO     | ================================================================================
+2026-02-22 15:00:28 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 15:00:28 | INFO     | Loaded 3 samples from dataset
+2026-02-22 15:00:28 | INFO     | Category distribution:
+2026-02-22 15:00:28 | INFO     |   safe: 3
+2026-02-22 15:00:28 | INFO     | Evaluating gpt-5-mini on 3 samples
+2026-02-22 15:00:29 | INFO     | Completed evaluation. Got 0 responses
+2026-02-22 15:00:29 | INFO     | []
+2026-02-22 15:00:29 | INFO     | Calculating metrics
+2026-02-22 15:00:29 | ERROR    | Benchmark failed with error: Must evaluate model before calculating metrics

@@ -1,0 +1,13 @@
+2026-02-22 15:13:45 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 15:13:45 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 15:13:45 | INFO     |   Model: gpt-5-nano
+2026-02-22 15:13:45 | INFO     |   Output dir: results/openai_ptbr/007
+2026-02-22 15:13:45 | INFO     |   Experiment Index: 007
+2026-02-22 15:13:45 | INFO     | ================================================================================
+2026-02-22 15:13:45 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 15:13:45 | INFO     | ================================================================================
+2026-02-22 15:13:45 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 15:13:45 | INFO     | Loaded 3 samples from dataset
+2026-02-22 15:13:45 | INFO     | Category distribution:
+2026-02-22 15:13:45 | INFO     |   safe: 3
+2026-02-22 15:13:45 | INFO     | Evaluating gpt-5-nano on 3 samples

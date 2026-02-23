@@ -12,6 +12,7 @@ dependencies = [
     "matplotlib>=3.10.8",
     "openai>=2.21.0",
     "pandas>=3.0.0",
+    "peft>=0.18.1",
     "pydantic>=2.12.5",
     "pytest>=9.0.2",
     "pytest-asyncio>=0.24.0",

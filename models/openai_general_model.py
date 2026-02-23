@@ -86,7 +86,7 @@ class OpenAIGeneralGuardrailModel(GuardrailModel):
 {categories_desc}
 
 Respond ONLY with valid JSON in the following format (no markdown, no code blocks, just raw JSON):
-{{"category": "<category_name>", "explanation": "<brief explanation>"}}"""
+{{"category": "<category_name>"}}"""
             
         
             DynamicEnum = Enum("DynamicCategory", {k: k for k in self.categories.keys()})

@@ -1,94 +1,168 @@
-# TODO: update to dynamic category classification 
-# Local execution of a fine-tuned Llama Guard model.
+"""CaraMLLo local Guardrail model wrapper.
 
-# Example implementation:
-import torch
+Implements a GuardrailModel that runs a locally fine-tuned Llama-Guard model
+using HuggingFace transformers and PEFT. The class provides lazy loading of the
+tokenizer/model and an async `evaluate()` that returns a `GuardrailResponse`.
+"""
+
+from __future__ import annotations
+
+import time
+from loguru import logger
+from datetime import datetime, timezone
 from pathlib import Path
-from transformers import AutoModelForCausalLM, AutoTokenizer #, MllamaForConditionalGeneration, AutoProcessor, MllamaProcessor, GenerationConfig
+from typing import Any, Dict
+
+import torch
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from core.base_model import GuardrailModel
+from core.schema import GuardrailRequest, GuardrailResponse
 
 
-def llama_guard_text_test(tokenizer, model, prompt, categories: dict[str, str]=None, excluded_category_keys: list[str]=[]):
+class CaraMLLoGuardrailModel(GuardrailModel):
+    """Local CaraMLLo / Llama-Guard model wrapper.
+
+    Expects `model_path`  which may be either a PEFT adapter path
+    (folder or file) or a full model id. If a PEFT adapter is passed it will be
+    loaded on top of the base model specified by `base_model` in the config or
+    defaulting to `meta-llama/Llama-Guard-3-1B`.
     """
-    This function uses the apply_chat_template helper function to tokenize and run inference on the provided inputs.
-    The new templates support setting an arbitrary dictionary of categories or excluding the predefined categories
-    by passing a list of the preexisting keys.
-    """
-    if categories is not None:
-        input_ids = tokenizer.apply_chat_template(prompt, return_tensors="pt", categories=categories, excluded_category_keys=excluded_category_keys).to("cuda")
-        # print("[personalized categories detected]")
-    else:
-        input_ids = tokenizer.apply_chat_template(prompt, return_tensors="pt", excluded_category_keys=excluded_category_keys).to("cuda")
-    input_prompt = tokenizer.decode(input_ids[0], skip_special_tokens=False)
+    def __init__(self, **config):
+        super().__init__(**config)
+        self._client_cache = None  # Initialize the cache
 
+    def _load_client(self) -> Dict[str, Any]:
+        """Lazy-load tokenizer and model.
 
-    prompt_len = input_ids.shape[1]
-    output = model.generate(
-        input_ids=input_ids,
-        max_new_tokens=20,
-        output_scores=True,
-        return_dict_in_generate=True,
-        pad_token_id=0,
-    )
-    generated_tokens = output.sequences[:, prompt_len:]
+        Returns a dict with keys `tokenizer` and `model`.
+        """
+        logger.info(f"Loading CaraMLLo model from {self.config.get('model_path')} with base {self.config.get('base_model')}")
+        model_path = self.config.get("model_path")
+        base_model = self.config.get("base_model", "meta-llama/Llama-Guard-3-1B")
 
-    response = tokenizer.decode(
-        generated_tokens[0], skip_special_tokens=True
-    )
-    return input_prompt, response
+        if not model_path:
+            raise ValueError("`model_path` must be provided in config to load local model")
 
+        # load tokenizer from base model
+        tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=True)
 
-categories = None
-# change categories when custom categories are needed
-def test_prompt_with_llama_guard(prompt):
-    conversation = [
-        {
+        # load base model
+        device_map = self.config.get("device_map", "auto")
+        dtype = self.config.get("torch_dtype")
+        torch_dtype = getattr(torch, dtype) if dtype else None
+
+        base = AutoModelForCausalLM.from_pretrained(base_model, torch_dtype=torch_dtype, device_map=device_map)
+
+        # If model_path points to a PEFT adapter, load it on top
+        peft_adapter = Path(model_path)
+        if peft_adapter.exists():
+            model = PeftModel.from_pretrained(base, model_path)
+        else:
+            # fallback: assume model_path is a HF id for a full model
+            model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch_dtype, device_map=device_map)
+
+        # Keep in eval mode
+        model.eval()
+
+        # Ensure we are using the most efficient kernels
+        if torch.cuda.is_available():
+            model.to("cuda") # type: ignore
+        
+        return {"tokenizer": tokenizer, "model": model}
+
+    @property
+    def client(self) -> Dict[str, Any]:
+        """Memoized client access to prevent re-loading weights."""
+        if not self._client_cache:
+            self._client_cache = self._load_client()
+        logger.info("Using cached CaraMLLo client")
+        return self._client_cache # type: ignore
+
+    async def evaluate(self, request: GuardrailRequest) -> GuardrailResponse:
+        """Evaluate the given text locally and return a GuardrailResponse.
+
+        The method generates a short completion with the model and expects a
+        JSON object like {"category": "...", "explanation": "..."} in the
+        model output. If parsing fails, falls back to `category='none'`.
+        """
+        start = time.time()
+
+        # Build category definition and input format
+        conversation = [{
             "role": "user",
             "content": [
                 {
                     "type": "text",
-                    "text": prompt
+                    "text": request.text
                 },
             ],
-        },
-    ]
+        },]
 
-    decoded_input_prompt, response = llama_guard_text_test(lg_small_text_tokenizer,
-                                                        llama_guard_model,
-                                                        conversation,
-                                                        categories,
-                                                        )
-    # if "unsafe" in response:
-    #     return True
-    # else:
-    #     return False
-    response = response.split("\n")
-    cats = {"safe": False, "unethical": False, "off-topic": False}
-    if "A1" in response[3:]:
-        cats["safe"] = True
-    if "A2" in response[3:]:
-        cats["unethical"] = True
-    if "A3" in response[3:]:
-        cats["off-topic"] = True
-    
-    return response[2], cats # str, {"safe": bool, "unethical": bool, "off-topic": bool}
+        tokenizer = self.client["tokenizer"]
+        model = self.client["model"]
 
-import sys
-from peft import PeftModel
+        input_ids = tokenizer.apply_chat_template(
+            conversation=conversation, 
+            return_tensors="pt", 
+            categories=self.categories, 
+        ).to(model.device)['input_ids'] 
+        
+        prompt_len = input_ids.shape[1]
 
-lg_small_text_model_id = "meta-llama/Llama-Guard-3-1B"
+        # generation parameters
+        gen_kwargs = {
+            "max_new_tokens": int(self.config.get("max_new_tokens", 20)),
+            "output_scores": True,
+            "pad_token_id": tokenizer.eos_token_id or 0,
+            "return_dict_in_generate": True,
+            "use_cache": True,
+        }
 
-# Loading the 1B text only model
-lg_small_text_tokenizer = AutoTokenizer.from_pretrained(lg_small_text_model_id)
-lg_small_text_model = AutoModelForCausalLM.from_pretrained(lg_small_text_model_id, torch_dtype=torch.bfloat16, device_map="auto")
+        try:
+            start = time.time()
+            with torch.no_grad(): # Prevents gradient memory overhead
+                output = model.generate(
+                    input_ids=input_ids,
+                    **gen_kwargs,
+                )
+            
+            generated = output.sequences[:, prompt_len:]
+
+            response = tokenizer.decode(
+                generated[0], skip_special_tokens=True
+            )
+
+            response_items = response.split("\n")
+
+            is_safe = True if response_items[2].strip() == "safe" else False
+
+            categories = {cat_name : False for cat_name in self.categories.keys()}
+
+            # Determine which categories were triggered based on the model output. 
+            # The fine-tuned model is expected to output category tokens like A1, A2, etc. 
+            # corresponding to the categories in order.
+            for i, cat_name in enumerate(categories.keys()):
+                if f"A{i+1}" in response_items[3:]:
+                    categories[cat_name] = True
+            triggered_categories = [cat for cat, triggered in categories.items() if triggered]
+
+            latency = (time.time() - start) * 1000.0
+
+            return GuardrailResponse(
+                is_safe=is_safe,
+                score=-1.0,
+                category=triggered_categories if triggered_categories else None,
+                latency=latency,
+                model_name=self.model_name,
+                timestamp=datetime.now(timezone.utc),
+                raw_response={"generated_text": response, "parsed": categories},
+            )
+
+        except Exception as e:
+            latency = (time.time() - start) * 1000.0
+            raise RuntimeError(f"Local model evaluation failed: {e}") from e
 
 
-filename = Path(sys.argv[1])
-llama_guard_model = PeftModel.from_pretrained(lg_small_text_model, filename)
-
-out_dir = Path(filename) / "tests"
-out_dir.mkdir(exist_ok=True, parents=True)
-
-print(f"Running fine-tuned model at {filename}")
-run_10_tests(out_dir, filename.name, n=10)
-
-print(f"Saving results at {out_dir}")
+__all__ = ["CaraMLLoGuardrailModel"]

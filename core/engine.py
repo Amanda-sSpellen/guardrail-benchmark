@@ -1,3 +1,4 @@
+# TODO: support batching for local models
 """
 engine.py: The asynchronous execution engine (the "Conductor").
 
@@ -97,4 +98,5 @@ class AsyncRunner:
             responses[index] = result
             
         # 4. Extract only the successful responses
+        print(f"Raw responses: {responses}")  # Debugging line to check the contents of responses
         return [res for res in responses if isinstance(res, GuardrailResponse)] 

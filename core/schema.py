@@ -36,7 +36,7 @@ class GuardrailResponse(BaseModel):
     """
     is_safe: bool = Field(..., description="Whether content passed safety checks")
     score: float = Field(..., description="Safety score from the model")
-    category: Optional[str] = Field(default=None, description="Violation category if unsafe")
+    category: Optional[str|list[str]] = Field(default=None, description="Violation category if unsafe")
     latency: float = Field(..., description="Response latency in milliseconds")
     model_name: str = Field(..., description="Name of the guardrail model")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Response timestamp")

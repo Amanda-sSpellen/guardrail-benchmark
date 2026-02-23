@@ -1,0 +1,10 @@
+2026-02-22 14:46:19 | INFO     | Initialized OpenAIPTBRBenchmark
+2026-02-22 14:46:19 | INFO     |   Dataset path: data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 14:46:19 | INFO     |   Model: gpt-5-mini
+2026-02-22 14:46:19 | INFO     |   Output dir: results/openai_ptbr/007
+2026-02-22 14:46:19 | INFO     |   Experiment Index: 007
+2026-02-22 14:46:19 | INFO     | ================================================================================
+2026-02-22 14:46:19 | INFO     | Starting OpenAI PT-BR Academic Dataset Benchmark
+2026-02-22 14:46:19 | INFO     | ================================================================================
+2026-02-22 14:46:19 | INFO     | Loading dataset from data/ptbr_academic_guardrail_test_dataset.json
+2026-02-22 14:46:19 | ERROR    | Benchmark failed with error: Dataset not found at data/ptbr_academic_guardrail_test_dataset.json

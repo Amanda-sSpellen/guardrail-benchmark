@@ -210,6 +210,8 @@ class OpenAIPTBRBenchmark:
             raise ValueError("Dataset not loaded. Call load_dataset() first.")
         
         logger.info(f"Evaluating {self.model_name} on {len(self.requests)} samples")
+        logger.info(f"System prompt: {self.model.system_prompt}")
+        logger.info(f"Categories: {self.model.categories}")
         
         # Run batch evaluation
         self.responses = await self.evaluator.runner.run_batch(
@@ -429,8 +431,8 @@ class OpenAIPTBRBenchmark:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "model": self.model_name,
             "dataset": "PTBRAcademicDataset",
-            "system_prompt": SYSTEM_PROMPT,
-            "categories": CATEGORIES,
+            "system_prompt": self.model.system_prompt,
+            "categories": self.model.categories,
             "metrics": self.metrics,
         }
         results_path = ""
@@ -548,7 +550,7 @@ if __name__ == "__main__":
     # Run the benchmark
     result = asyncio.run(run_openai_ptbr_benchmark(
         max_concurrency=2,
-        model_name="gpt-5-mini",
+        model_name="gpt-5-nano",
     ))
     
     # Print summary
