@@ -19,6 +19,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from core.base_model import GuardrailModel
 from core.schema import GuardrailRequest, GuardrailResponse
+from models.batch_evaluators.llama_guard_batch_evaluator import LlamaGuardBatchEvaluator
 
 
 class CaraMLLoGuardrailModel(GuardrailModel):
@@ -32,6 +33,7 @@ class CaraMLLoGuardrailModel(GuardrailModel):
     def __init__(self, **config):
         super().__init__(**config)
         self._client_cache = None  # Initialize the cache
+        self.batch_evaluator = LlamaGuardBatchEvaluator(model_name=self.model_name, categories=self.categories)
 
     def _load_client(self) -> Dict[str, Any]:
         """Lazy-load tokenizer and model.

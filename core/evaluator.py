@@ -1,3 +1,4 @@
+# TODO: discard
 """
 evaluator.py: High-level benchmark orchestration (the "Judge").
 
@@ -60,7 +61,8 @@ class Evaluator:
         self,
         models: List[GuardrailModel],
         dataset: GuardrailDataset,
-        dataset_path: str
+        dataset_path: str,
+        batch_size: int = 1,
     ) -> BenchmarkReport:
         """
         Run a comprehensive benchmark comparing multiple models on a dataset.
@@ -103,7 +105,7 @@ class Evaluator:
         # Run each model against the dataset
         for model in models:
             logger.info(f"Evaluating model: {model.model_name}")
-            responses = await self.runner.run_batch(model, requests)
+            responses = await self.runner.run_batch(model, requests, batch_size=batch_size) 
             self.report.results[model.model_name] = responses
         
         return self.report

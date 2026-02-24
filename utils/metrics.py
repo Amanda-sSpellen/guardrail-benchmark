@@ -6,10 +6,11 @@ and latency statistics from benchmark responses. Supports both binary and
 multiclass classification with confusion matrices.
 """
 
+import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
-import numpy as np
-
+from loguru import logger
+from datetime import datetime, timezone
 
 @dataclass
 class ClassificationMetrics:
@@ -385,3 +386,128 @@ def calculate_multiclass_stats(
         stats["latency"] = calculate_latency_metrics(latencies).to_dict()
     
     return stats
+
+
+def _get_category_distribution(requests) -> Dict[str, int]:
+        """Get distribution of categories in the dataset."""
+        categories = {}
+        for request in requests:
+            cat = request.metadata.get("category")
+            categories[cat] = categories.get(cat, 0) + 1
+        return categories
+
+
+def _get_performance_by_category(
+    requests,
+    predicted_safe: List[bool],
+    actual_safe: List[bool]
+) -> Dict[str, Dict[str, Any]]:
+    """Calculate metrics per category."""
+    performance = {}
+    
+    for i, request in enumerate(requests):
+        cat = request.metadata.get("category")
+        
+        if cat not in performance:
+            performance[cat] = {
+                "total": 0,
+                "correct": 0,
+                "accuracy": 0.0,
+            }
+        
+        performance[cat]["total"] += 1
+        if predicted_safe[i] == actual_safe[i]:
+            performance[cat]["correct"] += 1
+    
+    # Calculate accuracy per category
+    for cat, stats in performance.items():
+        if stats["total"] > 0:
+            stats["accuracy"] = stats["correct"] / stats["total"]
+    
+    return performance
+
+
+def calculate_metrics(
+        responses, 
+        requests, 
+        model_name: str, 
+        dataset_name: str, 
+        safe_categories: list[str],
+    ) -> Dict[str, Any]:
+    """
+    Calculate detailed classification and latency metrics.
+    
+    Includes both binary (safe vs unsafe) and multiclass (specific categories) metrics.
+    
+    Returns:
+        Dictionary of metrics including binary, multiclass, and latency stats
+    """
+    logger.info("Calculating metrics")
+    
+    if not responses or not requests:
+        raise ValueError("Must evaluate model before calculating metrics")
+        
+    predicted_safe = [resp.is_safe for resp in responses]
+    actual_safe = [
+        req.metadata.get("category") in safe_categories
+        for req in requests
+    ]
+    
+    # Binary classification metrics
+    classification_metrics = calculate_classification_metrics(
+        predicted_safe,
+        actual_safe
+    )
+    
+    # Multiclass metrics (specific categories)
+    predicted_categories = [resp.category for resp in responses]
+    actual_categories = [req.metadata.get("category") for req in requests]
+    
+    # Define ground truth classes for optional specification
+    all_categories = set(actual_categories) | set(predicted_categories)
+    classes = sorted(list(all_categories)) # type: ignore
+    
+    multiclass_metrics = calculate_multiclass_metrics(
+        predicted_categories, # type: ignore
+        actual_categories, # type: ignore
+        classes=classes
+    )
+    
+    latencies = [resp.latency for resp in responses]
+    latency_metrics = calculate_latency_metrics(latencies)
+    
+    # Store detailed metrics
+    metrics = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "model": model_name,
+        "dataset": dataset_name,
+        "total_samples": len(requests),
+        "binary_classification": classification_metrics.to_dict(),
+        "multiclass_classification": multiclass_metrics.to_dict(),
+        "latency": latency_metrics.to_dict(),
+        "category_distribution": _get_category_distribution(requests=requests),
+        "performance_by_category": _get_performance_by_category(
+            requests,
+            predicted_safe,
+            actual_safe
+        ),
+    }
+    
+    logger.info("Binary Classification Metrics:")
+    logger.info(f"  Accuracy: {classification_metrics.accuracy:.4f}")
+    logger.info(f"  Precision: {classification_metrics.precision:.4f}")
+    logger.info(f"  Recall: {classification_metrics.recall:.4f}")
+    logger.info(f"  F1 Score: {classification_metrics.f1:.4f}")
+    
+    logger.info("Multiclass Classification Metrics:")
+    logger.info(f"  Accuracy: {multiclass_metrics.accuracy:.4f}")
+    logger.info(f"  Macro F1: {multiclass_metrics.macro_f1:.4f}")
+    logger.info(f"  Weighted F1: {multiclass_metrics.weighted_f1:.4f}")
+    
+    logger.info("Per-Class Metrics:")
+    for cls, cls_metrics in multiclass_metrics.per_class_metrics.items():
+        logger.info(f"  {cls}: P={cls_metrics['precision']:.4f} R={cls_metrics['recall']:.4f} F1={cls_metrics['f1']:.4f} (n={cls_metrics['support']})")
+    
+    logger.info(f"  Mean Latency: {latency_metrics.mean_latency:.2f}ms")
+    
+    return metrics

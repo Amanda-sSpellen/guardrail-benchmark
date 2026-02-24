@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 from pathlib import Path
 
+from loguru import logger
+
 # Use non-interactive backend for file generation
 matplotlib.use("Agg")
 
@@ -75,6 +77,83 @@ def plot_confusion_matrix(
         plt.close(fig)
         return str(save_path)
     
+    return None
+
+
+def plot_multiclass_confusion_matrix(
+    cm: Dict[str, Dict[str, int]] | np.ndarray,
+    class_names: Optional[List[str]] = None,
+    model_name: str = "Model",
+    normalize: bool = False,
+    cmap: str = "Blues",
+    save_path: Optional[str | Path] = None,
+) -> Optional[str]:
+    """
+    Plot and save a multiclass confusion matrix.
+
+    Accepts either a nested-dict confusion matrix (as produced by
+    `calculate_multiclass_metrics().confusion_matrix`) or a numpy array
+    together with `class_names`.
+    """
+    # Convert dict representation to numpy array if needed
+    if isinstance(cm, dict):
+        # Preserve insertion order from the dict (metrics builds it that way)
+        if class_names is None:
+            class_names = list(cm.keys())
+
+        classes = class_names
+        n = len(classes)
+        arr = np.zeros((n, n), dtype=int)
+        for i, true_cls in enumerate(classes):
+            row = cm.get(true_cls, {})
+            for j, pred_cls in enumerate(classes):
+                arr[i, j] = int(row.get(pred_cls, 0))
+    else:
+        arr = np.array(cm)
+        if class_names is None:
+            # Fallback to numeric labels
+            class_names = [str(i) for i in range(arr.shape[0])]
+
+    # Optionally normalize rows (true-class normalization)
+    disp = arr.astype(float)
+    if normalize:
+        with np.errstate(all="ignore"):
+            row_sums = disp.sum(axis=1, keepdims=True)
+            disp = np.divide(disp, row_sums, where=row_sums != 0)
+
+    fig, ax = plt.subplots(figsize=(max(8, len(class_names) * 0.6), max(6, len(class_names) * 0.6)))
+    im = ax.imshow(disp, interpolation="nearest", cmap=cmap)
+    plt.colorbar(im, ax=ax)
+
+    # Ticks and labels
+    ax.set_xticks(np.arange(len(class_names)))
+    ax.set_yticks(np.arange(len(class_names)))
+    ax.set_xticklabels(class_names, rotation=45, ha="right")
+    ax.set_yticklabels(class_names)
+    ax.set_ylabel("True Label", fontsize=12)
+    ax.set_xlabel("Predicted Label", fontsize=12)
+    ax.set_title(f"Confusion Matrix - {model_name}", fontsize=14, fontweight="bold")
+
+    # Annotate cells with counts or percentages
+    fmt = ".2f" if normalize else "d"
+    thresh = disp.max() / 2.0 if disp.size else 0
+    for i in range(disp.shape[0]):
+        for j in range(disp.shape[1]):
+            val = disp[i, j]
+            text = format(int(val) if not normalize else val, fmt)
+            ax.text(j, i, text, ha="center", va="center",
+                    color="white" if disp[i, j] > thresh else "black",
+                    fontsize=10)
+
+    plt.tight_layout()
+
+    if save_path:
+        save_path = Path(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        return str(save_path)
+
     return None
 
 
@@ -191,3 +270,53 @@ def plot_metrics_comparison(
         return str(save_path)
     
     return None
+
+
+def generate_confusion_matrices(metrics, output_dir, experiment_index, model_name) -> Dict[str, Path]:
+    """
+    Generate confusion matrices for binary and multiclass classification.
+    
+    Returns:
+        Dictionary mapping visualization names to file paths
+    """
+    logger.info("Generating visualizations")
+    
+    if not metrics:
+        raise ValueError("Must calculate metrics before generating visualizations")
+    
+    paths = {}
+    index_prefix = f"{experiment_index:03d}_"
+    
+    # Confusion matrix for binary classification
+    cm = metrics["binary_classification"]
+    cm_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}binary_confusion_matrix.png"
+    plot_confusion_matrix(
+        tp=cm["tp"],
+        tn=cm["tn"],
+        fp=cm["fp"],
+        fn=cm["fn"],
+        model_name=f"{model_name} (Safe vs Unsafe)",
+        save_path=cm_path,
+    )
+    paths["binary_confusion_matrix"] = cm_path
+    logger.info(f"Saved binary confusion matrix: {cm_path}")
+    
+    # Multiclass confusion matrix (if available)
+    try:
+        mc = metrics["multiclass_classification"]["confusion_matrix"]
+    except Exception:
+        mc = None
+
+    if mc:
+        mc_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}multiclass_confusion_matrix.png"
+        class_names = list(mc.keys()) if isinstance(mc, dict) else None
+        plot_multiclass_confusion_matrix(
+            cm=mc,
+            class_names=class_names,
+            model_name=f"{model_name} (Multiclass)",
+            save_path=mc_path,
+        )
+        paths["multiclass_confusion_matrix"] = mc_path
+        logger.info(f"Saved multiclass confusion matrix: {mc_path}")
+
+    return paths
