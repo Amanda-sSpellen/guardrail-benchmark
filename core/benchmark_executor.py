@@ -20,7 +20,6 @@ from core.evaluator import Evaluator
 from core.base_model import GuardrailModel
 from core.base_dataset import GuardrailDataset
 
-
 @dataclass
 class BenchmarkResult:
 	requests: list
@@ -57,6 +56,7 @@ class BenchmarkExecutor:
 		dataset_kwargs: Optional[Dict[str, Any]] = None,
 		max_concurrency: int = 5,
 		batch_size: Optional[int] = None,
+		iterations: Optional[int] = 1,
 	) -> None:
 		self.model_cls = model_cls
 		self.model_instance = model_instance
@@ -68,9 +68,11 @@ class BenchmarkExecutor:
 
 		self.max_concurrency = max_concurrency
 		self.batch_size = batch_size or 1
+		self.iterations = iterations or 1
 
 		# internal components
 		self.evaluator = Evaluator(max_concurrency=max_concurrency)
+
 
 	async def run(self, dataset_path: str, post_process: Optional[Callable] = None) -> BenchmarkResult:
 		"""Run the benchmark: load dataset, evaluate model, return results.
@@ -121,7 +123,14 @@ class BenchmarkExecutor:
 		logger.info(f"System prompt: {getattr(model, 'system_prompt', 'N/A')}")
 		logger.info(f"Model categories: {getattr(model, 'categories', 'N/A')}")
 
-		responses = await self.evaluator.runner.run_batch(model, requests, batch_size=self.batch_size)
+		result = await self.evaluator.runner.run_batch(
+			model=model, 
+			requests=requests, 
+			batch_size=self.batch_size,
+			iterations=self.iterations,
+		)
+		requests = result["requests"]
+		responses = result["responses"]
 
 		# optional post-processing hook
 		if post_process is not None:

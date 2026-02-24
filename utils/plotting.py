@@ -24,7 +24,8 @@ def plot_confusion_matrix(
     fp: int,
     fn: int,
     model_name: str = "Model",
-    save_path: Optional[str | Path] = None
+    save_path: Optional[str | Path] = None,
+    normalize: bool = False,
 ) -> Optional[str]:
     """
     Plot and save a confusion matrix visualization.
@@ -42,12 +43,19 @@ def plot_confusion_matrix(
     """
     # Create confusion matrix
     cm = np.array([[tn, fp], [fn, tp]])
+
+    # Optionally normalize rows (true-class normalization)
+    disp = cm.astype(float)
+    if normalize:
+        with np.errstate(all="ignore"):
+            row_sums = disp.sum(axis=1, keepdims=True)
+            disp = np.divide(disp, row_sums, where=row_sums != 0)
     
     # Create figure
     fig, ax = plt.subplots(figsize=(8, 6))
     
     # Plot heatmap
-    im = ax.imshow(cm, interpolation="nearest", cmap="Blues")
+    im = ax.imshow(disp, interpolation="nearest", cmap="Blues")
     
     # Add colorbar
     plt.colorbar(im, ax=ax)
@@ -82,7 +90,7 @@ def plot_confusion_matrix(
 
 def plot_multiclass_confusion_matrix(
     cm: Dict[str, Dict[str, int]] | np.ndarray,
-    class_names: Optional[List[str]] = None,
+    class_names: List[str],
     model_name: str = "Model",
     normalize: bool = False,
     cmap: str = "Blues",
@@ -97,9 +105,9 @@ def plot_multiclass_confusion_matrix(
     """
     # Convert dict representation to numpy array if needed
     if isinstance(cm, dict):
-        # Preserve insertion order from the dict (metrics builds it that way)
-        if class_names is None:
-            class_names = list(cm.keys())
+        # # Preserve insertion order from the dict (metrics builds it that way)
+        # if class_names is None:
+        #     class_names = list(cm.keys())
 
         classes = class_names
         n = len(classes)
@@ -272,7 +280,7 @@ def plot_metrics_comparison(
     return None
 
 
-def generate_confusion_matrices(metrics, output_dir, experiment_index, model_name) -> Dict[str, Path]:
+def generate_confusion_matrices(metrics, output_dir, experiment_index, model_name, categories, normalize=False) -> Dict[str, Path]:
     """
     Generate confusion matrices for binary and multiclass classification.
     
@@ -288,33 +296,52 @@ def generate_confusion_matrices(metrics, output_dir, experiment_index, model_nam
     index_prefix = f"{experiment_index:03d}_"
     
     # Confusion matrix for binary classification
-    cm = metrics["binary_classification"]
+    is_accumulative = metrics['accumulative']
+    iterations = metrics['iterations']
+    if is_accumulative:
+        # Get averaged confusion matrix
+        cm = metrics["binary_classification"]["average_confusion_matrix"]
+    else: 
+        cm = metrics["binary_classification"]
+    
+    labeled_cm = {}
+    labeled_cm["safe"] = {
+        "safe": cm["tp"],
+        "unsafe": cm["fp"]
+    }
+    labeled_cm["unsafe"] = {
+        "safe": cm["fn"],
+        "unsafe": cm["tn"]
+    }
+        
     cm_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}binary_confusion_matrix.png"
-    plot_confusion_matrix(
-        tp=cm["tp"],
-        tn=cm["tn"],
-        fp=cm["fp"],
-        fn=cm["fn"],
-        model_name=f"{model_name} (Safe vs Unsafe)",
-        save_path=cm_path,
-    )
+    plot_multiclass_confusion_matrix(
+            cm=labeled_cm,
+            class_names=["safe", "unsafe"],
+            model_name=f"{model_name} (Safe vs Unsafe){f' (Averaged {iterations} iterations)' if is_accumulative else ''}",
+            save_path=cm_path,
+            normalize=normalize,
+        )
     paths["binary_confusion_matrix"] = cm_path
     logger.info(f"Saved binary confusion matrix: {cm_path}")
     
     # Multiclass confusion matrix (if available)
     try:
-        mc = metrics["multiclass_classification"]["confusion_matrix"]
+        if is_accumulative:
+            mc = metrics["multiclass_classification"]["average_confusion_matrix"]
+        else:
+            mc = metrics["multiclass_classification"]
     except Exception:
         mc = None
 
     if mc:
         mc_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}multiclass_confusion_matrix.png"
-        class_names = list(mc.keys()) if isinstance(mc, dict) else None
         plot_multiclass_confusion_matrix(
             cm=mc,
-            class_names=class_names,
-            model_name=f"{model_name} (Multiclass)",
+            class_names=categories,
+            model_name=f"{model_name} (Multiclass){f' (Averaged {iterations} iterations)' if is_accumulative else ''}",
             save_path=mc_path,
+            normalize=normalize,
         )
         paths["multiclass_confusion_matrix"] = mc_path
         logger.info(f"Saved multiclass confusion matrix: {mc_path}")

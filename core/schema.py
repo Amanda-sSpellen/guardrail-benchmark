@@ -40,4 +40,6 @@ class GuardrailResponse(BaseModel):
     latency: float = Field(..., description="Response latency in milliseconds")
     model_name: str = Field(..., description="Name of the guardrail model")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Response timestamp")
+    instance_index: Optional[int] = Field(default=None, description="Original dataset instance index for accumulative runs")
+    iteration: Optional[int] = Field(default=None, description="Iteration number for accumulative runs (0-based)")
     raw_response: Optional[Any] = Field(default=None, description="Raw response from the model for debugging purposes")

@@ -1,4 +1,3 @@
-# TODO: support batching for local models
 """
 engine.py: The asynchronous execution engine (the "Conductor").
 
@@ -8,7 +7,7 @@ of guardrail models while respecting rate limits through semaphore-based concurr
 
 import asyncio
 from tqdm import tqdm
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 from core.schema import GuardrailRequest, GuardrailResponse
 from core.base_model import GuardrailModel
 
@@ -48,7 +47,23 @@ class AsyncRunner:
         """
         async with self.semaphore:
             return await model.evaluate(request)
-        
+    
+    def expand_requests(self, requests: List[GuardrailRequest], iterations: int = 1) -> Dict[str, Any]:
+        # Expand requests for accumulative executions (repeat each request `iterations` times)
+        expanded_requests: List[GuardrailRequest] = []
+        orig_indices: List[int] = []
+        iteration_nums: List[int] = []
+        for i, req in enumerate(requests):
+            for it in range(max(1, iterations)):
+                expanded_requests.append(req)
+                orig_indices.append(i)
+                iteration_nums.append(it)
+        return {
+            "requests": expanded_requests,
+            "orig_indices": orig_indices,
+            "iteration_nums": iteration_nums
+        }
+    
 
     async def run_batch(
         self,
@@ -56,8 +71,9 @@ class AsyncRunner:
         requests: List[GuardrailRequest],
         max_concurrency: Optional[int] = None,
         batch_size: Optional[int] = 1,
+        iterations: int = 1,
         **kwargs,
-    ) -> List[GuardrailResponse]:
+    ) -> Dict[str, List[GuardrailRequest]|List[GuardrailResponse]]:
         """
         Run a batch of requests through a model with concurrency control.
         
@@ -82,49 +98,61 @@ class AsyncRunner:
         if max_concurrency is not None:
             self.semaphore = asyncio.Semaphore(max_concurrency)
 
-        # 1. Initialize with explicit type hinting to satisfy Pylance
-        responses: List[Optional[Union[GuardrailResponse, Exception]]] = [None] * len(requests)
-        
-        # 2. Wrap tasks with index tracking
-        async def _wrapped_eval(index: int, req: GuardrailRequest):
-            # Add a slight staggered start if you have a high concurrency
-            await asyncio.sleep(index * 0.5) 
-            try:
-                return index, await self._evaluate_with_semaphore(model, req)
-            except Exception as e:
-                return index, e
+        expanded_requests_dict = self.expand_requests(requests=requests, iterations=iterations)
+        expanded_requests = expanded_requests_dict["requests"]
+        orig_indices = expanded_requests_dict["orig_indices"]
+        iteration_nums = expanded_requests_dict["iteration_nums"]
 
-        # 3. Execute and update tqdm
+        # Initialize response slots for expanded requests
+        responses: List[Optional[Union[GuardrailResponse, Exception]]] = [None] * len(expanded_requests)
+
+        # Wrapped evaluator that returns the expanded index
+        async def _wrapped_eval(exp_index: int, req: GuardrailRequest):
+            # slight stagger based on concurrency to avoid bursts
+            await asyncio.sleep((exp_index % max(1, self.max_concurrency)) * 0.05)
+            try:
+                return exp_index, await self._evaluate_with_semaphore(model, req)
+            except Exception as e:
+                return exp_index, e
+
+        # Execute using batching or individual calls over expanded requests
         if batch_size and batch_size > 1:
-            # Process in batches
-            for i in range(0, len(requests), batch_size):
-                chunk = requests[i : i + batch_size]
-            
-                # Call the optimized batch method (True Tensor Batching)
-                # We wrap this in a single semaphore 'hit' because it's ONE GPU operation
+            for i in range(0, len(expanded_requests), batch_size):
+                chunk = expanded_requests[i : i + batch_size]
+
                 async with self.semaphore:
                     try:
-                        # You need to implement evaluate_batch in your model class
                         if model.batch_evaluator is None:
                             raise ValueError("BatchEvaluator is not set for this model.")
-                        
+
                         batch_results = await model.batch_evaluator.evaluate_batch(
-                            requests=chunk, 
+                            requests=chunk,
                             batch_size=batch_size,
                             **kwargs,
                         )
-                        
-                        # Map results back to the correct indices
+
                         for j, result in enumerate(batch_results):
                             responses[i + j] = result
-                            
+
                     except Exception as e:
                         print(f"Batch {i//batch_size} failed: {e}")
         else:
-            tasks = [_wrapped_eval(i, req) for i, req in enumerate(requests)]
-            for coro in tqdm(asyncio.as_completed(tasks), total=len(requests), desc="Evaluating"):
-                index, result = await coro
-                responses[index] = result
-            
-        # 4. Extract only the successful responses
-        return [res for res in responses if isinstance(res, GuardrailResponse)] 
+            tasks = [_wrapped_eval(i, req) for i, req in enumerate(expanded_requests)]
+            for coro in tqdm(asyncio.as_completed(tasks), total=len(expanded_requests), desc="Evaluating"):
+                exp_index, result = await coro
+                responses[exp_index] = result
+
+        # Enrich GuardrailResponse objects with `instance_index` and `iteration` metadata
+        for idx, res in enumerate(responses):
+            if isinstance(res, GuardrailResponse):
+                try:
+                    # attach indices so callers can identify the original instance and iteration
+                    res.instance_index = orig_indices[idx]
+                    res.iteration = iteration_nums[idx]
+                except Exception:
+                    pass
+
+        return {
+            "requests": expanded_requests,
+            "responses": [res for res in responses if isinstance(res, GuardrailResponse)]
+        }

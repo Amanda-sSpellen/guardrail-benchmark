@@ -294,7 +294,7 @@ def save_results(
                 "request_metadata": req.metadata,
                 "prediction": resp.model_dump(),
             }
-            for req, resp in zip(requests, responses)
+            for req, resp in zip(requests, responses) 
         ]
 
         detailed_metadata_path = save_experiment_metadata(

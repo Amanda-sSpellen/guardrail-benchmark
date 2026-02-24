@@ -65,6 +65,7 @@ def save_plots_and_results(
         experiment_index: int = 0, 
         dataset_name: str = "dataset",
         model_name: str = "model",
+        iterations: int = 1,
     ):
     """
     Compute metrics, generate plots, and save results for an experiment run.
@@ -93,11 +94,10 @@ def save_plots_and_results(
         model_name=results.model.model_name,
         dataset_name=dataset_name,
         safe_categories=results.model.safe_categories,
+        categories=results.model.categories,
+        iterations=iterations,
     )
-
-    # Generate and save confusion matrix visualizations (binary + multiclass)
-    generate_confusion_matrices(metrics, Path(output_dir), experiment_index, model_name)
-
+    
     # Persist results and detailed metadata (predictions) to disk
     save_results(
         model_name=model_name,
@@ -110,6 +110,10 @@ def save_plots_and_results(
         output_dir=Path(output_dir),
         experiment_index=experiment_index,
     )
+
+    # Generate and save confusion matrix visualizations (binary + multiclass)
+    generate_confusion_matrices(metrics, Path(output_dir), experiment_index, model_name, categories=results.model.categories)
+    
 
 def load_and_plot(result_path: str, output_dir: str, experiment_index: int):
     """
@@ -129,17 +133,25 @@ def load_and_plot(result_path: str, output_dir: str, experiment_index: int):
     results = load_results(result_path)
 
     # Regenerate confusion matrix plots from the metrics structure
-    generate_confusion_matrices(results, Path(output_dir), experiment_index, results["model"])
+    generate_confusion_matrices(
+        results, 
+        Path(output_dir), 
+        experiment_index, 
+        results["model"], 
+        list(results["category_distribution"]),
+        normalize=True
+    )
 
 async def main(
         model_name = "gpt-5-nano",
         output_dir = "results/openai_ptbr",
         experiment_name = "openai_ptbr_benchmark",
         dataset_name = "PTBRAcademicDataset",
-        dataset_path = "data/ptbr_generated_academic_questions.json",
+        dataset_path = "data/ptbr_academic_sample.json",
         safe_categories = ["safe"],
         max_concurrency = 2,
         batch_size = 1,
+        iterations = 2,
     ):
     """
     Run a minimal benchmark using an OpenAI-based guardrail model.
@@ -158,7 +170,7 @@ async def main(
     if not dataset_path.exists():
         raise SystemExit(f"Dataset not found: {dataset_path}")
 
-    logger.info(f"Starting experiment {experiment_index} with model {model_name} on dataset {dataset_name}")
+    logger.info(f"Starting experiment {experiment_index:03d} with model {model_name} on dataset {dataset_name}")
     logger.info(f"Parameters: max_concurrency={max_concurrency}, batch_size={batch_size}, safe_categories={safe_categories}")
 
     executor = BenchmarkExecutor(
@@ -172,6 +184,7 @@ async def main(
         dataset_cls=PTBRAcademicDataset,
         max_concurrency=max_concurrency,
         batch_size=batch_size,
+        iterations=iterations,
     )
 
     results = await executor.run(str(dataset_path))
@@ -186,13 +199,14 @@ async def main(
         experiment_index=experiment_index, 
         dataset_name=dataset_name,
         model_name=results.model.model_name,
+        iterations=iterations,
     )
 
 
 if __name__ == "__main__":
     asyncio.run(main())
     # load_and_plot(
-    #     result_path="results/openai_ptbr/008/008_openai_ptbr_benchmark_20260222_221833.json", 
+    #     result_path="results/openai_ptbr/011/011_openai_ptbr_benchmark_predictions_metadata_20260224_134406.json", 
     #     output_dir="results/openai_ptbr", 
-    #     experiment_index=10
+    #     experiment_index=12
     # )
