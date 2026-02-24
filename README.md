@@ -118,6 +118,7 @@ uv run python experiments/benchmark_v1.py
 - [ ] `models/caramllo_model.py`: 
     - [x] TODO: update to dynamic category classification 
     - [x] TODO: integration and smoke tests
+- [ ] `tests/integration/test_caramllo_mock.py`: TODO: fix
 - [ ] `core/engine.py`: # TODO: support batching for local models
 - [ ] `models/llama_guard_model.py`: 
     - [ ] TODO: fix implementation 

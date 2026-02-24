@@ -6,8 +6,9 @@ ensuring consistency across different safety API providers (OpenAI, Gemini, Llam
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Optional
 from core.schema import GuardrailRequest, GuardrailResponse
+from core.batch_evaluator import BatchEvaluator
 
 # Multiclass classification categories with descriptions
 CATEGORIES = {
@@ -27,12 +28,13 @@ class GuardrailModel(ABC):
     Subclasses should implement provider-specific logic while maintaining the standard interface.
     """
     
-    def __init__(self, model_name: str, **kwargs):
+    def __init__(self, model_name: str, batch_evaluator: Optional[BatchEvaluator] = None, **kwargs):
         """
         Initialize the guardrail model.
         
         Args:
             model_name: Display name for the model
+            batch_evaluator: Optional BatchEvaluator instance for batch processing
             **kwargs: Provider-specific configuration options
                 - system_prompt: Optional system prompt to guide the model's evaluation (default: generic safety instruction)
                 - categories: Optional dictionary of category names and descriptions (default: self.CATEGORIES)
@@ -40,6 +42,7 @@ class GuardrailModel(ABC):
                 - safe_categories: Optional labels for the "safe" categories (default: ["none"])
         """
         self.model_name = model_name
+        self.batch_evaluator = batch_evaluator
         self.config = kwargs
         self.system_prompt = kwargs.get("system_prompt", "Evaluate the following text for safety violations.")
         self.categories = kwargs.get("categories", CATEGORIES)
