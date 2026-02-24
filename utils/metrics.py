@@ -187,9 +187,10 @@ def calculate_confusion_matrix(
     
     # Fill confusion matrix
     for pred, truth in zip(predicted, ground_truth):
-        pred_idx = class_to_idx[pred]
-        truth_idx = class_to_idx[truth]
-        cm[truth_idx, pred_idx] += 1
+        if pred is not None:
+            pred_idx = class_to_idx[pred if not isinstance(pred, list) else pred[0]] # TODO: handle None
+            truth_idx = class_to_idx[truth]
+            cm[truth_idx, pred_idx] += 1
     
     return cm, classes
 
@@ -561,9 +562,6 @@ def calculate_metrics(
     # is_accumulative = any(getattr(r, "instance_index", None) is not None for r in responses) and len(responses) > len(requests)
 
     if iterations > 1:
-        # Multiclass accumulative metrics
-        acc_multi = calculate_accumulative_multiclass_metrics(responses, requests, classes=classes)
-
         # Binary accumulative metrics
         # per-iteration classification metrics
         iter_classification_metrics = []
@@ -640,6 +638,9 @@ def calculate_metrics(
         for cat, stats in performance.items():
             if stats["total"] > 0:
                 stats["accuracy"] = stats["correct"] / stats["total"]
+        
+        # Multiclass accumulative metrics
+        acc_multi = calculate_accumulative_multiclass_metrics(responses, requests, classes=classes)
 
         metrics = {
             "timestamp": datetime.now(timezone.utc).isoformat(),

@@ -33,7 +33,7 @@ class CaraMLLoGuardrailModel(GuardrailModel):
     def __init__(self, **config):
         super().__init__(**config)
         self._client_cache = None  # Initialize the cache
-        self.batch_evaluator = LlamaGuardBatchEvaluator(model_name=self.model_name, categories=self.categories)
+        self.batch_evaluator = LlamaGuardBatchEvaluator(model_name=self.model_name, categories=self.categories, client=self.client)
 
     def _load_client(self) -> Dict[str, Any]:
         """Lazy-load tokenizer and model.

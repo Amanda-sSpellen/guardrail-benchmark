@@ -89,7 +89,7 @@ def plot_confusion_matrix(
 
 
 def plot_multiclass_confusion_matrix(
-    cm: Dict[str, Dict[str, int]] | np.ndarray,
+    cm: Dict[str, Dict[str, float]] | np.ndarray,
     class_names: List[str],
     model_name: str = "Model",
     normalize: bool = False,
@@ -111,11 +111,11 @@ def plot_multiclass_confusion_matrix(
 
         classes = class_names
         n = len(classes)
-        arr = np.zeros((n, n), dtype=int)
+        arr = np.zeros((n, n))
         for i, true_cls in enumerate(classes):
             row = cm.get(true_cls, {})
             for j, pred_cls in enumerate(classes):
-                arr[i, j] = int(row.get(pred_cls, 0))
+                arr[i, j] = row.get(pred_cls, 0)
     else:
         arr = np.array(cm)
         if class_names is None:
@@ -143,12 +143,12 @@ def plot_multiclass_confusion_matrix(
     ax.set_title(f"Confusion Matrix - {model_name}", fontsize=14, fontweight="bold")
 
     # Annotate cells with counts or percentages
-    fmt = ".2f" if normalize else "d"
+    fmt = ".2f" # if normalize else "d"
     thresh = disp.max() / 2.0 if disp.size else 0
     for i in range(disp.shape[0]):
         for j in range(disp.shape[1]):
             val = disp[i, j]
-            text = format(int(val) if not normalize else val, fmt)
+            text = format(val if not normalize else val, fmt)
             ax.text(j, i, text, ha="center", va="center",
                     color="white" if disp[i, j] > thresh else "black",
                     fontsize=10)

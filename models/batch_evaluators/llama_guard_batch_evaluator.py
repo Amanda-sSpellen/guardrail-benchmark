@@ -13,9 +13,10 @@ class LlamaGuardBatchEvaluator(BatchEvaluator):
     This allows for flexible implementations of batch processing and 
     concurrency control, which can be used by the AsyncRunner.
     """
-    def __init__(self, model_name: str, categories: Dict[str, Any]):
+    def __init__(self, model_name: str, categories: Dict[str, Any], client: Any):
         self.model_name = model_name
         self.categories = categories
+        self.client = client
 
     async def evaluate_batch(
         self,
@@ -37,9 +38,10 @@ class LlamaGuardBatchEvaluator(BatchEvaluator):
             List of GuardrailResponse objects in the same order as input requests.
         """
 
-        client: Dict[str, Any] = kwargs.get("client", {})
-        tokenizer = client.get("tokenizer")
-        model = client.get("model")
+        # client: Dict[str, Any] = kwargs.get("client", {})
+
+        tokenizer = self.client.get("tokenizer")
+        model = self.client.get("model")
         
         if tokenizer is None or model is None:
             raise ValueError("tokenizer and model must be provided in kwargs['client']")
@@ -106,5 +108,6 @@ class LlamaGuardBatchEvaluator(BatchEvaluator):
                 score=-1.0,
                 category=triggered_categories if triggered_categories else None,
                 latency=latency,
+                raw_response=response_text,
             ))
         return responses
