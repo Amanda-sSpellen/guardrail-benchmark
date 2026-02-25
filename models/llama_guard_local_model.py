@@ -10,11 +10,9 @@ from __future__ import annotations
 import time
 from loguru import logger
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict
 
 import torch
-from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from core.base_model import GuardrailModel
@@ -68,9 +66,9 @@ class LLamaGuardGuardrailModel(GuardrailModel):
         # Keep in eval mode
         model.eval()
 
-        # Ensure we are using the most efficient kernels
-        if torch.cuda.is_available():
-            model.to("cuda") # type: ignore
+        # # Ensure we are using the most efficient kernels
+        # if torch.cuda.is_available():
+        #     model.to("cuda") # type: ignore
         
         return {"tokenizer": tokenizer, "model": model}
 

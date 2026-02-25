@@ -47,9 +47,10 @@ class LlamaGuardBatchEvaluator(BatchEvaluator):
             raise ValueError("tokenizer and model must be provided in kwargs['client']")
         
         # 1. Prepare batch inputs
+        model_name = model.config._name_or_path
         formatted_prompts = [
             tokenizer.apply_chat_template(
-                conversation=[{"role": "user", "content": [{"type": "text", "text": req.text}]}],
+                conversation=[{"role": "user", "content": [{"type": "text", "text": req.text}]}] if model_name != "meta-llama/Llama-Guard-3-8B" else [{"role": "user", "content": req.text}],
                 tokenize=False,
                 categories=self.categories if self.categories != {} else None, 
                 add_generation_prompt=True
