@@ -45,7 +45,12 @@ class GuardrailModel(ABC):
         self.batch_evaluator = batch_evaluator
         self.config = kwargs
         self.system_prompt = kwargs.get("system_prompt", "Evaluate the following text for safety violations.")
-        self.categories = kwargs.get("categories", CATEGORIES)
+
+        if kwargs.get("no_categories", False):
+            self.categories = {}
+        else:
+            self.categories = kwargs.get("categories", CATEGORIES)
+
         self.temperature = kwargs.get("temperature")
         self.safe_categories = kwargs.get("safe_categories", ["none"])  # Default safe category label
         self._client = None

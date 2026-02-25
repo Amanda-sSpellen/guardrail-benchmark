@@ -73,7 +73,7 @@ def plot_confusion_matrix(
     for i in range(2):
         for j in range(2):
             ax.text(j, i, str(cm[i, j]), ha="center", va="center",
-                    color="white" if cm[i, j] > cm.max() / 2 else "black",
+                    color="white" if cm[i, j] > cm.max() / 2.0 else "black",
                     fontsize=16, fontweight="bold")
     
     plt.tight_layout()
@@ -148,7 +148,7 @@ def plot_multiclass_confusion_matrix(
 
     # Annotate cells with counts or percentages
     fmt = ".2f" # if normalize else "d"
-    thresh = disp.max() / 3 if disp.size else 0
+    thresh = disp.max() / 3.0 if disp.size else 0
     for i in range(disp.shape[0]):
         for j in range(disp.shape[1]):
             val = disp[i, j]

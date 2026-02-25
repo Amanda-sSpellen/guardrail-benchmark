@@ -51,7 +51,7 @@ class LlamaGuardBatchEvaluator(BatchEvaluator):
             tokenizer.apply_chat_template(
                 conversation=[{"role": "user", "content": [{"type": "text", "text": req.text}]}],
                 tokenize=False,
-                categories=self.categories,
+                categories=self.categories if self.categories != {} else None, 
                 add_generation_prompt=True
             ) for req in requests
         ]
@@ -95,7 +95,8 @@ class LlamaGuardBatchEvaluator(BatchEvaluator):
 
             is_safe = True if response_items[2].strip() == "safe" else False
 
-            categories = {cat_name : False for cat_name in self.categories.keys()}
+            categories = {cat_name : False for cat_name in self.categories.keys()} if self.categories else {}
+
 
             for j, cat_name in enumerate(categories.keys()):
                 if f"A{j+1}" in response_items[3:]:

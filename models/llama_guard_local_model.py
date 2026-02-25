@@ -1,4 +1,4 @@
-"""CaraMLLo local Guardrail model wrapper.
+"""LLama Guard local Guardrail model wrapper.
 
 Implements a GuardrailModel that runs a locally fine-tuned Llama-Guard model
 using HuggingFace transformers and PEFT. The class provides lazy loading of the
@@ -22,8 +22,8 @@ from core.schema import GuardrailRequest, GuardrailResponse
 from models.batch_evaluators.llama_guard_batch_evaluator import LlamaGuardBatchEvaluator
 
 
-class CaraMLLoGuardrailModel(GuardrailModel):
-    """Local CaraMLLo / Llama-Guard model wrapper.
+class LLamaGuardGuardrailModel(GuardrailModel):
+    """Local LLama Guard / Llama-Guard model wrapper.
 
     Expects `model_path`  which may be either a PEFT adapter path
     (folder or file) or a full model id. If a PEFT adapter is passed it will be
@@ -40,12 +40,12 @@ class CaraMLLoGuardrailModel(GuardrailModel):
 
         Returns a dict with keys `tokenizer` and `model`.
         """
-        logger.info(f"Loading CaraMLLo model from {self.config.get('model_path')} with base {self.config.get('base_model')}")
-        model_path = self.config.get("model_path")
+        logger.info(f"Loading LLama Guard model with base {self.config.get('base_model')}")
+        # model_path = self.config.get("model_path")
         base_model = self.config.get("base_model", "meta-llama/Llama-Guard-3-1B")
 
-        if not model_path:
-            raise ValueError("`model_path` must be provided in config to load local model")
+        # if not model_path:
+        #     raise ValueError("`model_path` must be provided in config to load local model")
 
         # load tokenizer from base model
         tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=True)
@@ -55,15 +55,15 @@ class CaraMLLoGuardrailModel(GuardrailModel):
         dtype = self.config.get("torch_dtype")
         torch_dtype = getattr(torch, dtype) if dtype else None
 
-        base = AutoModelForCausalLM.from_pretrained(base_model, torch_dtype=torch_dtype, device_map=device_map)
+        model = AutoModelForCausalLM.from_pretrained(base_model, torch_dtype=torch_dtype, device_map=device_map)
 
-        # If model_path points to a PEFT adapter, load it on top
-        peft_adapter = Path(model_path)
-        if peft_adapter.exists():
-            model = PeftModel.from_pretrained(base, model_path)
-        else:
-            # fallback: assume model_path is a HF id for a full model
-            model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch_dtype, device_map=device_map)
+        # # If model_path points to a PEFT adapter, load it on top
+        # peft_adapter = Path(model_path)
+        # if peft_adapter.exists():
+        #     model = PeftModel.from_pretrained(base, model_path)
+        # else:
+        #     # fallback: assume model_path is a HF id for a full model
+        #     model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch_dtype, device_map=device_map)
 
         # Keep in eval mode
         model.eval()
@@ -79,7 +79,7 @@ class CaraMLLoGuardrailModel(GuardrailModel):
         """Memoized client access to prevent re-loading weights."""
         if not self._client_cache:
             self._client_cache = self._load_client()
-        logger.info("Using cached CaraMLLo client")
+        logger.info("Using cached LLama Guard client")
         return self._client_cache # type: ignore
 
     async def evaluate(self, request: GuardrailRequest) -> GuardrailResponse:
@@ -167,4 +167,4 @@ class CaraMLLoGuardrailModel(GuardrailModel):
             raise RuntimeError(f"Local model evaluation failed: {e}") from e
 
 
-__all__ = ["CaraMLLoGuardrailModel"]
+__all__ = ["LLamaGuardGuardrailModel"]

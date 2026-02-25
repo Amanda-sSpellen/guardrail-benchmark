@@ -14,14 +14,13 @@ Notes:
       together for quick experimentation.
 """
 
-import os
 import asyncio
 from pathlib import Path
 from loguru import logger
 from typing import List
 
 from core.benchmark_executor import BenchmarkExecutor, BenchmarkResult
-from models.caramllo_model import CaraMLLoGuardrailModel
+from models.llama_guard_local_model import LLamaGuardGuardrailModel
 from datasets.ptbr_academic_dataset import PTBRAcademicDataset
 from utils.metrics import calculate_metrics
 from utils.plotting import generate_confusion_matrices
@@ -205,15 +204,17 @@ def load_and_plot(
     )
 
 async def main(
-        model_name: str = "CaraMLLo",
-        output_dir = "results/caramllo_ptbr",
-        experiment_name = "caramllo_ptbr_benchmark",
+        model_name: str = "Llama Guard",
+        base_model: str = "meta-llama/Llama-Guard-3-1B",
+        output_dir = "results/llama_guard_ptbr",
+        experiment_name = "llama_guard_ptbr_benchmark",
         dataset_name = "PTBRAcademicDataset",
         dataset_path = "data/ptbr_academic_sample.json",
         safe_categories = ["safe"],
         max_concurrency = 2,
         batch_size = 4,
         iterations = 2,
+        no_categories: bool = False, # TODO: fix
     ):
     """
     Run a minimal benchmark using an OpenAI-based guardrail model.
@@ -234,18 +235,15 @@ async def main(
     logger.info(f"Starting experiment {experiment_index:03d} with model {model_name} on dataset {dataset_name}")
     logger.info(f"Parameters: max_concurrency={max_concurrency}, batch_size={batch_size}, safe_categories={safe_categories}")
 
-    model_path = os.getenv("CARAMLLO_MODEL_PATH")
-    base_model = os.getenv("CARAMLLO_BASE_MODEL", "meta-llama/Llama-Guard-3-1B")
-
     executor = BenchmarkExecutor(
-        model_cls=CaraMLLoGuardrailModel,
+        model_cls=LLamaGuardGuardrailModel,
         model_kwargs={
             "model_name": model_name,
-            "model_path": model_path,
             "base_model": base_model,
             "system_prompt": SYSTEM_PROMPT,
             "categories": CATEGORIES,
             "safe_categories": safe_categories,
+            "no_categories": no_categories,
         },
         dataset_cls=PTBRAcademicDataset,
         max_concurrency=max_concurrency,
@@ -274,8 +272,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 
     # load_and_plot(
-    #     result_path="results/caramllo_ptbr/000/000_caramllo_ptbr_benchmark_predictions_metadata_20260224_202102.json", 
-    #     output_dir="results/caramllo_ptbr", 
+    #     result_path="results/llama_guard_ptbr/000/000_llama_guard_ptbr_benchmark_predictions_metadata_20260224_202102.json", 
+    #     output_dir="results/llama_guard_ptbr", 
     #     experiment_index=1,
     #     safe_categories=["safe"],
     #     normalize=True,
