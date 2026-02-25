@@ -95,6 +95,7 @@ def plot_multiclass_confusion_matrix(
     normalize: bool = False,
     cmap: str = "Blues",
     save_path: Optional[str | Path] = None,
+    category_distribution: Optional[Dict[str, float]] = None,
 ) -> Optional[str]:
     """
     Plot and save a multiclass confusion matrix.
@@ -124,9 +125,12 @@ def plot_multiclass_confusion_matrix(
 
     # Optionally normalize rows (true-class normalization)
     disp = arr.astype(float)
-    if normalize:
+    if normalize: # TODO: fix
         with np.errstate(all="ignore"):
-            row_sums = disp.sum(axis=1, keepdims=True)
+            if category_distribution is None:
+                row_sums = disp.sum(axis=1, keepdims=True)
+            else:
+                row_sums = np.array([[category_distribution[cat]] for cat in class_names])
             disp = np.divide(disp, row_sums, where=row_sums != 0)
 
     fig, ax = plt.subplots(figsize=(max(8, len(class_names) * 0.6), max(6, len(class_names) * 0.6)))
@@ -144,13 +148,13 @@ def plot_multiclass_confusion_matrix(
 
     # Annotate cells with counts or percentages
     fmt = ".2f" # if normalize else "d"
-    thresh = disp.max() / 2.0 if disp.size else 0
+    thresh = disp.max() / 3 if disp.size else 0
     for i in range(disp.shape[0]):
         for j in range(disp.shape[1]):
             val = disp[i, j]
             text = format(val if not normalize else val, fmt)
             ax.text(j, i, text, ha="center", va="center",
-                    color="white" if disp[i, j] > thresh else "black",
+                    color="black" if disp[i, j] > thresh else "black",
                     fontsize=10)
 
     plt.tight_layout()
@@ -280,7 +284,15 @@ def plot_metrics_comparison(
     return None
 
 
-def generate_confusion_matrices(metrics, output_dir, experiment_index, model_name, categories, normalize=False) -> Dict[str, Path]:
+def generate_confusion_matrices(
+        metrics, 
+        output_dir, 
+        experiment_index, 
+        model_name, 
+        categories, 
+        safe_categories: List[str],
+        normalize=False,
+    ) -> Dict[str, Path]:
     """
     Generate confusion matrices for binary and multiclass classification.
     
@@ -307,21 +319,30 @@ def generate_confusion_matrices(metrics, output_dir, experiment_index, model_nam
     labeled_cm = {}
     labeled_cm["safe"] = {
         "safe": cm["tp"],
-        "unsafe": cm["fp"]
+        "unsafe": cm["fn"]
     }
     labeled_cm["unsafe"] = {
-        "safe": cm["fn"],
+        "safe": cm["fp"],
         "unsafe": cm["tn"]
     }
         
-    cm_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}binary_confusion_matrix.png"
+    cm_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}binary{'_normalized' if normalize else ''}_confusion_matrix.png"
+    # cat_dist: Dict[str, float] = {
+    #     "safe": sum([metrics["category_distribution"][cat] for cat in safe_categories])/iterations,
+    #     "unsafe": sum([
+    #         dist
+    #         for cat, dist in metrics["category_distribution"].items() 
+    #         if cat not in safe_categories
+    #     ])/iterations,
+    # }
     plot_multiclass_confusion_matrix(
-            cm=labeled_cm,
-            class_names=["safe", "unsafe"],
-            model_name=f"{model_name} (Safe vs Unsafe){f' (Averaged {iterations} iterations)' if is_accumulative else ''}",
-            save_path=cm_path,
-            normalize=normalize,
-        )
+        cm=labeled_cm,
+        class_names=["safe", "unsafe"],
+        model_name=f"{model_name} (Safe vs Unsafe){f' (Averaged {iterations} iterations)' if is_accumulative else ''}{' (Normalized)' if normalize else ''}",
+        save_path=cm_path,
+        normalize=normalize,
+        category_distribution=None, # cat_dist,
+    )
     paths["binary_confusion_matrix"] = cm_path
     logger.info(f"Saved binary confusion matrix: {cm_path}")
     
@@ -335,13 +356,14 @@ def generate_confusion_matrices(metrics, output_dir, experiment_index, model_nam
         mc = None
 
     if mc:
-        mc_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}multiclass_confusion_matrix.png"
+        mc_path = output_dir / f"{experiment_index:03d}" / f"{index_prefix}multiclass{'_normalized' if normalize else ''}_confusion_matrix.png"
         plot_multiclass_confusion_matrix(
             cm=mc,
             class_names=categories,
-            model_name=f"{model_name} (Multiclass){f' (Averaged {iterations} iterations)' if is_accumulative else ''}",
+            model_name=f"{model_name} (Multiclass){f' (Averaged {iterations} iterations)' if is_accumulative else ''}{' (Normalized)' if normalize else ''}",
             save_path=mc_path,
             normalize=normalize,
+            category_distribution=None, #{cat: dist/iterations for cat, dist in metrics["category_distribution"].items()},
         )
         paths["multiclass_confusion_matrix"] = mc_path
         logger.info(f"Saved multiclass confusion matrix: {mc_path}")

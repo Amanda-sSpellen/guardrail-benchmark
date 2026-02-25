@@ -18,6 +18,7 @@ import os
 import asyncio
 from pathlib import Path
 from loguru import logger
+from typing import List
 
 from core.benchmark_executor import BenchmarkExecutor, BenchmarkResult
 # from models.openai_general_model import OpenAIGeneralGuardrailModel
@@ -68,6 +69,7 @@ def save_plots_and_results(
         dataset_name: str = "dataset",
         model_name: str = "model",
         iterations: int = 1,
+        normalize: bool = True,
     ):
     """
     Compute metrics, generate plots, and save results for an experiment run.
@@ -115,15 +117,33 @@ def save_plots_and_results(
 
     # Generate and save confusion matrix visualizations (binary + multiclass)
     generate_confusion_matrices(
-        metrics, 
-        Path(output_dir), 
-        experiment_index, 
-        model_name, 
+        metrics=metrics, 
+        output_dir=Path(output_dir), 
+        experiment_index=experiment_index, 
+        model_name=model_name, 
         categories=results.model.categories,
+        safe_categories=results.model.safe_categories,
+        normalize=True,
+    )
+
+    generate_confusion_matrices(
+        metrics=metrics, 
+        output_dir=Path(output_dir), 
+        experiment_index=experiment_index, 
+        model_name=model_name, 
+        categories=results.model.categories,
+        safe_categories=results.model.safe_categories,
+        normalize=False,
     )
     
 
-def load_and_plot(result_path: str, output_dir: str, experiment_index: int):
+def load_and_plot(
+        result_path: str, 
+        output_dir: str, 
+        experiment_index: int,
+        safe_categories: List[str],
+        normalize: bool = True,
+    ):
     """
     Load saved results and regenerate visualizations.
 
@@ -138,16 +158,51 @@ def load_and_plot(result_path: str, output_dir: str, experiment_index: int):
     """
 
     # Load the saved metrics blob (may contain other top-level keys)
-    results = load_results(result_path)
+    loaded = load_results(result_path)
+    metrics = loaded["metrics"]
+    requests = loaded["requests"]
+    responses = loaded["responses"]
+
+    new_metrics = calculate_metrics(
+        responses=responses,
+        requests=requests,
+        model_name=metrics["model"],
+        dataset_name=metrics["dataset"],
+        safe_categories=safe_categories,
+        categories=metrics["category_distribution"],
+        iterations=metrics["iterations"],
+    )
+
+    save_results(
+        model_name=metrics["model"],
+        experiment_name="new",
+        dataset_name=metrics["dataset"],
+        requests=requests,
+        responses=responses,
+        metrics=metrics,
+        output_dir=Path(output_dir),
+        experiment_index=experiment_index,
+    )
 
     # Regenerate confusion matrix plots from the metrics structure
     generate_confusion_matrices(
-        results, 
-        Path(output_dir), 
-        experiment_index, 
-        results["model"], 
-        list(results["category_distribution"]),
-        normalize=False
+        metrics=new_metrics, 
+        output_dir=Path(output_dir), 
+        experiment_index=experiment_index, 
+        model_name=new_metrics["model"], 
+        categories=list(new_metrics["category_distribution"]),
+        safe_categories=safe_categories,
+        normalize=False,
+    )
+    
+    generate_confusion_matrices(
+        metrics=new_metrics, 
+        output_dir=Path(output_dir), 
+        experiment_index=experiment_index, 
+        model_name=new_metrics["model"], 
+        categories=list(new_metrics["category_distribution"]),
+        safe_categories=safe_categories,
+        normalize=True,
     )
 
 async def main(
@@ -172,7 +227,6 @@ async def main(
     """
 
     experiment_index = get_experiment_index(output_dir)
-    # indexed_output_dir = Path(output_dir) / f"{experiment_index:03d}"
 
     dataset_path = Path(dataset_path)
     if not dataset_path.exists():
@@ -218,9 +272,12 @@ async def main(
 
 if __name__ == "__main__":
     
-    # asyncio.run(main())
-    load_and_plot(
-        result_path="results/caramllo_ptbr/000/000_caramllo_ptbr_benchmark_predictions_metadata_20260224_152828.json", 
-        output_dir="results/caramllo_ptbr", 
-        experiment_index=1
-    )
+    asyncio.run(main())
+
+    # load_and_plot(
+    #     result_path="results/caramllo_ptbr/000/000_caramllo_ptbr_benchmark_predictions_metadata_20260224_202102.json", 
+    #     output_dir="results/caramllo_ptbr", 
+    #     experiment_index=1,
+    #     safe_categories=["safe"],
+    #     normalize=True,
+    # )

@@ -13,6 +13,7 @@ from dataclasses import asdict
 from loguru import logger
 
 from core.base_model import GuardrailModel
+from core.schema import GuardrailRequest, GuardrailResponse
 
 
 def save_benchmark_results(
@@ -243,13 +244,13 @@ def save_results(
         model_name: str, 
         experiment_name: str,
         dataset_name: str,
-        model: GuardrailModel,
         requests: list, 
         responses: list, 
         metrics: dict, 
         output_dir: Path, 
         experiment_index: int, 
-        detailed: bool = True
+        detailed: bool = True,
+        model: Optional[GuardrailModel] = None,
     ) -> str | tuple[str, str]:
     """
     Save benchmark results to JSON file.
@@ -273,8 +274,8 @@ def save_results(
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "model": model_name,
         "dataset": dataset_name,
-        "system_prompt": model.system_prompt,
-        "categories": model.categories,
+        "system_prompt": model.system_prompt if model is not None else "unknown",
+        "categories": model.categories if model is not None else "unknown",
         "metrics": metrics,
     }
     results_path = ""
@@ -370,9 +371,78 @@ def load_results(results_file: str) -> Dict[str, Any]:
                 if res is not None:
                     return res
         return None
-
+    
     metrics = _find_metrics(data)
     if metrics is None:
-        raise ValueError(f"No 'metrics' key found in {results_file}")
+        raise ValueError(f"No 'metrics' key found in {results_file} and no predictions present")
 
-    return metrics
+    # Try to find detailed predictions 
+    def _find_key(obj: Any, key: str) -> Optional[Any]:
+        if isinstance(obj, dict):
+            if key in obj:
+                return obj[key]
+            for v in obj.values():
+                res = _find_key(v, key)
+                if res is not None:
+                    return res
+        elif isinstance(obj, list):
+            for item in obj:
+                res = _find_key(item, key)
+                if res is not None:
+                    return res
+        return None
+
+    predictions = _find_key(data, "predictions")
+    if predictions is not None:
+        requests: list[GuardrailRequest] = []
+        responses: list[GuardrailResponse] = []
+
+        for p in predictions:
+            # Reconstruct GuardrailRequest
+            req_text = p.get("request_text")
+            req_meta = p.get("request_metadata", {})
+            try:
+                requests.append(GuardrailRequest(text=req_text, metadata=req_meta))
+            except Exception:
+                # Fallback to a minimal dict-like request
+                requests.append(GuardrailRequest(text=str(req_text), metadata=dict(req_meta)))
+
+            # Reconstruct GuardrailResponse from the dumped prediction
+            pred_obj = p.get("prediction")
+            if pred_obj is None:
+                # older files may use different keys
+                pred_obj = p.get("response") or p.get("result")
+
+            try:
+                # GuardrailResponse expects proper types; parse gracefully
+                if isinstance(pred_obj, dict):
+                    responses.append(GuardrailResponse.parse_obj(pred_obj))
+                else:
+                    # If prediction is a primitive, wrap it into raw_response
+                    responses.append(GuardrailResponse(
+                        is_safe=False,
+                        score=0.0,
+                        latency=0.0,
+                        model_name="unknown",
+                        raw_response=pred_obj,
+                    ))
+            except Exception:
+                # Best-effort fallback: create a response with raw content
+                try:
+                    responses.append(GuardrailResponse.parse_obj(pred_obj))
+                except Exception:
+                    responses.append(GuardrailResponse(
+                        is_safe=False,
+                        score=0.0,
+                        latency=0.0,
+                        model_name="unknown",
+                        raw_response=pred_obj,
+                    ))
+
+        return {
+            "metrics": metrics,
+            "requests": requests, 
+            "responses": responses,
+        }    
+
+    return {"metrics": metrics,}

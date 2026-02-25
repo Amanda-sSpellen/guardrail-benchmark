@@ -323,14 +323,10 @@ def calculate_accumulative_multiclass_metrics(
     for it in iterations_set:
         preds = []
         actuals = []
-        for r in responses:
-            if getattr(r, "iteration", 0) == it:
+        for i, r in enumerate(responses):
+            if r.iteration == it:
                 preds.append(r.category)
-                inst_idx = getattr(r, "instance_index", None)
-                if inst_idx is None:
-                    # fallback: try to match by order (may be unsafe)
-                    inst_idx = len(actuals)
-                actuals.append(requests[inst_idx].metadata.get("category"))
+                actuals.append(requests[i].metadata.get("category"))
 
         if not preds:
             # empty iteration, skip
@@ -570,13 +566,12 @@ def calculate_metrics(
         for it in range(iterations):
             preds = []
             actuals = []
-            for r in responses:
+            for i, r in enumerate(responses):
                 if r.iteration == it:
                     preds.append(r.is_safe)
-                    inst_idx = r.instance_index
-                    if inst_idx is None:
-                        inst_idx = len(actuals)
-                    actuals.append(requests[inst_idx].metadata.get("category") in safe_categories)
+                    actual_cat = requests[i].metadata.get("category")
+                    actuals.append(actual_cat in safe_categories)
+                    # actuals.append(requests[inst_idx].metadata.get("category") in safe_categories)
 
             if not preds:
                 continue
